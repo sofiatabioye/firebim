@@ -95,7 +95,7 @@
   },
   "scripts": {
     "webpack-dev-server": "webpack serve",
-    "build": "GENERATE_SOURCE_MAPS=false && 2webpack --mode production",
+    "build": "GENERATE_SOURCE_MAPS=false && webpack --mode production",
     "start": "node ./src/server.js",
     "dev": "webpack serve --mode development",
     "test": "react-scripts test",
