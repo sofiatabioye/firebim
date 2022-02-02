@@ -62,7 +62,7 @@ const schema = {
 }
 
 
-const fields = ['name', 'email', 'actions'];
+const fields = ['name', 'email','project', 'actions'];
 
 const Users = () => {
   const dispatch = useDispatch();
@@ -188,7 +188,7 @@ const Users = () => {
               <CModalHeader closeButton>
                 <CModalTitle>{edit ? "Update User":  "Invite New User" }</CModalTitle>
               </CModalHeader>
-              <CForm className="form-horizontal" onSubmit={edit? handleUpdateUser :handleInvite }>
+              <CForm className="form-horizontal">
               <CModalBody>
                   <CFormGroup row>
                     <CCol md="3">
@@ -196,7 +196,7 @@ const Users = () => {
                     </CCol>
                     <CCol xs="12" md="9">
                       <CInput type="text" id="name" name="name" placeholder="Enter User Name..." onChange={handleChange} value={formState.values.name || ''} required />
-                      <CFormText className="help-block">Please enter your username</CFormText>
+                      <CFormText className="help-block">Please enter username</CFormText>
                     </CCol>
                   </CFormGroup>
                 {edit ? null : <CFormGroup row>
@@ -205,53 +205,10 @@ const Users = () => {
                     </CCol>
                     <CCol xs="12" md="9">
                       <CInput type="text" id="email" name="email" placeholder="Enter Email..." onChange={handleChange} value={formState.values.email || ''} required />
-                      <CFormText className="help-block">Please enter your email</CFormText>
+                      <CFormText className="help-block">Please enter email</CFormText>
                     </CCol>
                   </CFormGroup> }
-                  <CFormGroup row>
-                    <CCol md="3">
-                      <CLabel htmlFor="role">Access Role</CLabel>
-                    </CCol>
-                    <CCol xs="12" md="9">
-                      <CSelect
-                        custom
-                        name="role"
-                        id="role"
-                        onChange={handleChange}
-                        value={formState.values.role || ''}
-                        required
-                      >
-                        <option value="">Please select</option>
-                        <option value="design">Designer</option>
-                        <option value="manufacture">Manufacturer</option>
-                        <option value="installation">Installation</option>
-                        <option value="delivery">Delivery</option>
-                        <option value="admin">Admin</option>
-                      </CSelect>
-                      <CFormText className="help-block">Select access roles</CFormText>
-                    </CCol>
-                  </CFormGroup>
-                {edit? null : <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="role">Project</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CSelect
-                      custom
-                      name="projectId"
-                      id="projectId"
-                      onChange={handleChange}
-                      value={formState.values.projectId || ''}
-                      required
-                    >
-                      <option value="">Please select</option>
-                      {projects && projects.length > 0 ? projects.map(project => (
-                        <option value={project.id} key={project.id}>{project.title}</option>)) : null
-                      }
-                    </CSelect>
-                    <CFormText className="help-block">Select access roles</CFormText>
-                  </CCol>
-                </CFormGroup> }
+                 
               </CModalBody>
               <CModalFooter>
                 <CButton className="text-white sidebar-dark" type="submit">Submit</CButton>{' '}

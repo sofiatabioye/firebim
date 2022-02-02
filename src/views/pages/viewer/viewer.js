@@ -1,21 +1,15 @@
 import React, { useEffect, useState, } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import ForgeViewer from 'react-forge-viewer';
 import Helpers from './viewerHelpers';
 import axios from "axios";
 import { Doughnut, Bar } from 'react-chartjs-2';
+import FireBIMBarChart from './barChart';
 import Collapsible from 'react-collapsible';
 import { CRow, CCol, CNav, CNavItem, CNavLink, CDataTable, CTabContent, CCard } from '@coreui/react';
 
-
-// const BASE_API_URL = "http://localhost:4000/api";
 const Autodesk = window.Autodesk;
-// const viewerLibaryURL =
-//   'https://developer.api.autodesk.com/modelderivative/v2/viewers/viewer3D.min.js?v=v6.6';
-// const viewerStylesheetURL =
-//   'https://developer.api.autodesk.com/modelderivative/v2/viewers/style.min.css?v=v6.6';
-
-
+const fireRatingClasses = ['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F'];
 
 const  Viewer = (props) => {
 
@@ -29,25 +23,6 @@ const  Viewer = (props) => {
   const [activeKey, setActiveKey] = useState(1)
   const dispatch = useDispatch();
 
-  // const [viewerScriptLoaded, setViewerScriptLoaded] = useState(false);
-  // const [viewerStyleLoaded, setViewerStyleLoaded] = useState(false);
-
-  // useEffect(() => {
-  //   if (!window.Autodesk) {
-  //     const styles = document.createElement('link');
-  //     styles.rel = 'stylesheet';
-  //     styles.type = 'text/css';
-  //     styles.href = viewerStylesheetURL;
-  //     styles.onload = () => setViewerStyleLoaded(true);
-  //     document.getElementsByTagName('head')[0].appendChild(styles);
-  //   }
-  //   if (!window.Autodesk) {
-  //     const s = document.createElement('script');
-  //     s.setAttribute('src', viewerLibaryURL);
-  //     s.onload = () => setViewerScriptLoaded(true);
-  //     document.getElementsByTagName('head')[0].appendChild(s);
-  //   }
-  // }, [dispatch]);
  
   const categoryData = {
     labels: categories,
@@ -56,15 +31,15 @@ const  Viewer = (props) => {
         label: '# of Votes',
         data: categoriesValues,
         backgroundColor: [
-          'rgba(255, 99, 132)',
-          'rgba(54, 162, 235)',
+          'rgba(223, 80, 112)',
+          'rgba(54, 142, 205)',
           'rgba(255, 206, 86)',
           'rgba(75, 192, 192)',
           'rgba(153, 102, 255)',
           'rgba(255, 159, 64)',
           'rgba(45, 220, 56)',
           'rgba(54, 162, 235)', 
-          'rgba(255, 205, 86)', 
+          'rgba(165, 100, 56)', 
           'rgba(65, 190, 30)',
           'rgba(255, 99, 132)'
 
@@ -99,7 +74,7 @@ const  Viewer = (props) => {
     labels,
     datasets: [
       {
-        label: 'Fire Rating',
+        label: 'Elements Distribution',
         data: categoriesValues,
         backgroundColor: 'rgba(255, 99, 132, 0.5)',
       }
@@ -109,7 +84,7 @@ const  Viewer = (props) => {
   useEffect( () => {
 
     async function getToken(){
-      return axios.get(  'http://localhost:4000/api/forge/token')
+      return axios.get(  'https://firebimapi.herokuapp.com/api/forge/token')
       .then((response) => {
      
         setToken(response.data.data.token);
@@ -125,9 +100,7 @@ const  Viewer = (props) => {
   }, [dispatch, props]);
   
   useEffect(() => {
-  
     Helpers.launchViewer('viewerDiv', urn, setModelProperties)
-    // console.log(modelProperties);
   }, [urn]);
 
   const handleViewerError = (error) => {
@@ -209,7 +182,6 @@ const  Viewer = (props) => {
   }
 
   const handleDocumentError = (viewer, error) => {
-
     console.log('Error loading a document', viewer);
   }
 
@@ -219,12 +191,12 @@ const  Viewer = (props) => {
     setViewer(viewer);
     viewer.loadExtension(FIREBIMExtension);
     const properties = [];
-    const fireRatingClasses = ['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F'];
     viewer.addEventListener( Autodesk.Viewing.SELECTION_CHANGED_EVENT, event=>{
-      const panel  = viewer.getPropertyPanel(true).setVisible(true);
-      // panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"}, true);
-      // panel.setCategoryCollapsed({name: "Text", type: "category"}, true);
-      // panel.setVisible(true);
+      viewer.getPropertyPanel(true).setVisible(true);
+      const panel  = viewer.getPropertyPanel()
+      panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"}, true);
+      panel.setCategoryCollapsed({name: "Text", type: "category"}, true);
+      panel.setCategoryCollapsed("Graphics", true);
  })
     getAllLeafComponents(viewer, function (dbIds) {
       viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating'],
@@ -232,7 +204,6 @@ const  Viewer = (props) => {
         for(let i=0; i< elements.length; i++) {
           const random = Math.floor(Math.random() * fireRatingClasses.length);
           let nodeName = viewer.model.getInstanceTree().getNodeName(elements[i].dbId);
-        
           let category = elements[i].properties[0]!== undefined ? elements[i].properties[0].displayValue.replace("Revit", "").trim(): '';
           // let rating =  elements[i].properties[1] !== undefined ? elements[i].properties[1].displayValue: '';
           let rating = fireRatingClasses[random]
@@ -252,11 +223,6 @@ const  Viewer = (props) => {
        setCategoriesValues(Object.values(categ));
         
       })
-      // viewer.select([378747])
-    
-      // virtual project community center
-      // warick street, newcastle upon tyne, ne2 1aq, united kingdom
-      // client saiwill
     })
     
   }
@@ -295,11 +261,6 @@ const  Viewer = (props) => {
       const panel  = viewer.getPropertyPanel()
       panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"});
       panel.setCategoryCollapsed({name: "Text", type: "category"}, false);
-      // viewer.getProperties(viewer.getSelection()[0], function (objProps) {
-      //   if(objProps){
-      //     console.log(objProps)
-      //   }
-      // });
   }
 
 
@@ -319,6 +280,7 @@ const  Viewer = (props) => {
           onDocumentError={handleDocumentError}
           onModelLoad={handleModelLoaded}
           onModelError={handleModelError}
+          // style={{height: '100%', width: '100%'}}
           />
             {/* <div id="viewerDiv" style={{width: '60%', position: 'fixed'}}  /> */}
       </CCol>
@@ -362,7 +324,7 @@ const  Viewer = (props) => {
           </div>
           <hr/>
           <div className='py-4 h-1/2'>
-            <Bar options={options} data={barData} />
+            <FireBIMBarChart title="Elements Distribution" categories={categories} data={categoriesValues} />
           </div>
         </div>
        : <div></div>}
@@ -383,16 +345,11 @@ const  Viewer = (props) => {
              <>
           <Collapsible trigger={item + " ("+ categoryItems.length+")"} key={index} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold'}}>
           <div className={"px-5 mb-4"}>
-            <Bar options={options} data={{
-              labels: ['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F'],
-              datasets: [
-                {
-                  label: 'Fire Rating',
-                  data: [classA1Ratings, classA2Ratings, classBRatings, classCRatings, classDRatings, classERatings, classFRatings],
-                  backgroundColor: 'rgba(75, 192, 192, 0.8)',
-                }
-              ],
-            }} />
+            <FireBIMBarChart 
+                title="Fire Rating Distribution" 
+                categories={['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F']} 
+                data={[classA1Ratings, classA2Ratings, classBRatings, classCRatings, classDRatings, classERatings, classFRatings]}
+            />
           </div>
           {/* <Doughnut data={{
               labels: ['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F'],

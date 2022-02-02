@@ -1,8 +1,8 @@
 const assetData = [
-  {id: 0, name: 'Tunde Bills', email: 'ab@gmail.com', role: 'designer', project: 'Project A'},
-  {id: 1, name: 'VB Agra', email: 'vb@gmail.com', role: 'manufacturer', project: 'Project B'},
-  {id: 2, name: 'Samantha Alias', email: 'sa@gmail.com', role: 'installation', project: 'Project A'},
-  {id: 3, name: 'Vrio Ible', email: 'vi@gmail.com', role: 'delivery', project: 'Project B'},
+  {id: 0, name: 'Olugbenga Akinade', email: 'olugbenga.akinade@gmail.com', role: 'designer', project: 'Virtual project community center'},
+  {id: 1, name: 'Omolara Arawomo', email: 'omolara.arawomo@gmail.com', role: 'manufacturer', project: 'Training center'},
+  {id: 2, name: 'Saheed Alaka', email: 'saheed.alaka@gmail.com', role: 'installation', project: 'School Cafetaria'},
+  {id: 3, name: 'Charles Maguire', email: 'charles.maguire@gmail.com', role: 'delivery', project: 'Training center'},
 ]
 
 export default assetData

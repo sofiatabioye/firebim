@@ -297,7 +297,7 @@ const Dashboard = (props) => {
   return (
     <>
      <CRow>
-       {/* <CCol xs="6" lg={loggedInUser.role=== 'admin'? '3': '4'} className="h-50">
+       <CCol xs="6" lg={'6'} className="h-50">
          <CCard accentColor="primary" textColor="primary">
            <CCardBody>
              <CRow style={{textAlign:"center"}}>
@@ -309,32 +309,30 @@ const Dashboard = (props) => {
            </CCardBody>
          </CCard>
        </CCol>
-       <CCol xs="6" lg={loggedInUser.role=== 'admin'? '3': '4'} className="h-50">
+       <CCol xs="6" lg={'6'} className="h-50">
          <CCard accentColor="info" textColor="info">
            <CCardBody>
            <CRow style={{textAlign:"center"}}>
              <CCol lg="3" md="3" sm="12"><FontAwesomeIcon icon={faTh} size="2x"/> </CCol>
              <CCol lg="9" md="9" sm="12">
-                 <span className="text-lg text-lg-center"> {categories ? categories.length : 'Loading...'} </span>
-                 <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start"> Asset Categories</span>
+                 <span className="text-lg text-lg-center"> 6 </span>
+                 <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start"> Fire Rating Classes</span>
              </CCol>
            </CRow>
            </CCardBody>
          </CCard>
        </CCol>
-       <CCol xs="6" lg={loggedInUser.role=== 'admin'? '3': '4'}>
-       <CCard accentColor="success" textColor="success">
-         <CCardBody>
-           <CRow style={{textAlign:"center"}}>
-             <CCol lg="3" md="3" sm="12"><FontAwesomeIcon icon={faThList} size="2x"/></CCol>
-             <CCol lg="9" md="9" sm="12">
-               <span className="text-lg text-lg-center"> {datapoints ? datapoints.length : 'Loading...'} </span>
-               <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start"> Asset Fields</span>
-             </CCol>
-           </CRow>
-         </CCardBody>
-       </CCard>
-     </CCol> */}
+       <CCol xs="12" lg={'12'} className="h-50">
+         <CCard accentColor="success" textColor="info">
+             <CCardHeader>
+               <h2>FIRE BIM</h2>
+             </CCardHeader>
+           <CCardBody>
+             About us
+           </CCardBody>
+         </CCard>
+       </CCol>
+      
        {/* {loggedInUser && loggedInUser.role === 'admin' ? <CCol xs="6" lg="3">
          <CCard accentColor="danger" textColor="danger">
            <CCardBody>
