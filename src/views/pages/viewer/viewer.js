@@ -193,11 +193,25 @@ const  Viewer = (props) => {
     const properties = [];
     viewer.addEventListener( Autodesk.Viewing.SELECTION_CHANGED_EVENT, event=>{
       viewer.getPropertyPanel(true).setVisible(true);
-      const panel  = viewer.getPropertyPanel()
-      panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"}, true);
-      panel.setCategoryCollapsed({name: "Text", type: "category"}, true);
-      panel.setCategoryCollapsed("Graphics", true);
+      // const panel  = viewer.getPropertyPanel()
+      // panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"}, true);
+      // panel.setCategoryCollapsed({name: "Text", type: "category"}, true);
+      // panel.setCategoryCollapsed("Text", true);
+      // panel.setVisible(true);
  })
+ viewer.addEventListener( Autodesk.Viewing.TOOLBAR_CREATED_EVENT, event =>{
+  let buttonRefresh = new Autodesk.Viewing.UI.Button('report-button');
+  buttonRefresh.addClass('report');
+  buttonRefresh.setToolTip('Generate Report');
+  buttonRefresh.onClick = function (e) {
+    return false;
+  }
+  let subToolbarUpdate = new Autodesk.Viewing.UI.ControlGroup('firebim-toolbar');
+  subToolbarUpdate.addControl(buttonRefresh);
+  viewer.toolbar.addControl(subToolbarUpdate);
+
+ });
+
     getAllLeafComponents(viewer, function (dbIds) {
       viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating'],
       function(elements){
@@ -280,11 +294,11 @@ const  Viewer = (props) => {
           onDocumentError={handleDocumentError}
           onModelLoad={handleModelLoaded}
           onModelError={handleModelError}
-          // style={{height: '100%', width: '100%'}}
           />
-            {/* <div id="viewerDiv" style={{width: '60%', position: 'fixed'}}  /> */}
+        
       </CCol>
       <CCol xs="5" xl="5" className="pb-2" style={{borderLeft: '3px solid'}}>
+     
         <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', overflow: 'scroll'}}>
         <CNav variant="tabs" role="tablist">
           <CNavItem>

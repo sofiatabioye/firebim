@@ -320,6 +320,19 @@ a.videospin:hover {
 }
  
 .ForgeViewer{
-  width:500px;
-  height:500px;
+  width: 500px;
+  height: 500px;
+  overflow: 'hidden';
+  margin: 0;
+  position: 'fixed';
+}
+.adsk-viewing-viewer .adsk-toolbar{
+  // right: 10%;
+  left: 45% !important;
+}
+.docking-panel .property-panel {
+  left: 0 !important
+}
+#ViewerPropertyPanel{
+  left: 0 !important
 }
