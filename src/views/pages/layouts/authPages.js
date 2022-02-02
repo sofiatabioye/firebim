@@ -10,7 +10,7 @@ const authLayout = ({ children }) => {
         <div className="w-full h-full flex flex-wrap bg-white font-family-karla h-screen authLayout">
 
        <div className="lg:w-1/2 md:w-1/3 shadow-2xl bg-blend-darken bg-auth">
-            {/* <img className="w-100 h-100 vw-100 hidden lg:block md:block sm:hidden" alt="construction site" src={logistics} /> */}
+          
         </div>
 
         <div className="w-full md:w-1/2 flex flex-col">
