@@ -303,7 +303,7 @@ const Dashboard = (props) => {
              <CRow style={{textAlign:"center"}}>
                <CCol lg="3" md="3" sm="12"> <FontAwesomeIcon icon={faBuilding} size="2x" /></CCol>
                <CCol lg="9" md="9" sm="12"> <span className="text-lg text-lg-center"> {projects ? projects.length: 'Loading...'} </span>
-                 <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start">Projects</span></CCol>
+                 <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start">Project</span></CCol>
              </CRow>
 
            </CCardBody>
@@ -313,10 +313,10 @@ const Dashboard = (props) => {
          <CCard accentColor="info" textColor="info">
            <CCardBody>
            <CRow style={{textAlign:"center"}}>
-             <CCol lg="3" md="3" sm="12"><FontAwesomeIcon icon={faTh} size="2x"/> </CCol>
+             <CCol lg="3" md="3" sm="12"><FontAwesomeIcon icon={faUsers} size="2x"/> </CCol>
              <CCol lg="9" md="9" sm="12">
                  <span className="text-lg text-lg-center"> 6 </span>
-                 <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start"> Fire Rating Classes</span>
+                 <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start"> Users</span>
              </CCol>
            </CRow>
            </CCardBody>

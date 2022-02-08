@@ -4,8 +4,9 @@ import { Bar } from 'react-chartjs-2';
 
 
 const FireBIMBarChart = (props) => {
-
+   
   const {title, categories, data} = props;
+  
   const options = {
     responsive: true,
     plugins: {
@@ -26,7 +27,7 @@ const FireBIMBarChart = (props) => {
       {
         label: 'Elements Distribution',
         data: data,
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        backgroundColor: 'rgba(54, 142, 205)',
       }
     ],
   };

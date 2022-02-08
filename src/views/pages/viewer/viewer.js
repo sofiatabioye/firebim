@@ -9,7 +9,7 @@ import Collapsible from 'react-collapsible';
 import { CRow, CCol, CNav, CNavItem, CNavLink, CDataTable, CTabContent, CCard } from '@coreui/react';
 
 const Autodesk = window.Autodesk;
-const fireRatingClasses = ['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F'];
+const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
 
 const  Viewer = (props) => {
 
@@ -56,30 +56,7 @@ const  Viewer = (props) => {
       },
     ],
   };
-  const options = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'BIM Elements Distribution',
-      },
-    },
-  };
 
-  const labels = categories;
-  const barData = {
-    labels,
-    datasets: [
-      {
-        label: 'Elements Distribution',
-        data: categoriesValues,
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      }
-    ],
-  };
 
   useEffect( () => {
 
@@ -235,7 +212,7 @@ const  Viewer = (props) => {
        }, {})
        setCategories(Object.keys(categ));
        setCategoriesValues(Object.values(categ));
-        
+    
       })
     })
     
@@ -272,6 +249,7 @@ const  Viewer = (props) => {
 
   const openPropertiesPanel = (item) =>{
       viewer.select(item.dbId);
+      viewer.fitToView(item.dbId, viewer.model);
       const panel  = viewer.getPropertyPanel()
       panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"});
       panel.setCategoryCollapsed({name: "Text", type: "category"}, false);
@@ -301,14 +279,13 @@ const  Viewer = (props) => {
      
         <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', overflow: 'scroll'}}>
         <CNav variant="tabs" role="tablist">
-          <CNavItem>
+        <CNavItem>
             <CNavLink
               href="#"
-              data-tab="home"
-              active={activeKey === 1}
-              onClick={() => setActiveKey(1)}
+              active={activeKey === 3}
+              onClick={() => setActiveKey(3)}
             >
-              Elements Distribution
+              All Components
             </CNavLink>
           </CNavItem>
           <CNavItem>
@@ -323,12 +300,15 @@ const  Viewer = (props) => {
           <CNavItem>
             <CNavLink
               href="#"
-              active={activeKey === 3}
-              onClick={() => setActiveKey(3)}
+              data-tab="home"
+              active={activeKey === 1}
+              onClick={() => setActiveKey(1)}
             >
-              All Components
+              Elements Distribution
             </CNavLink>
           </CNavItem>
+         
+         
     </CNav>
     <CTabContent>
       {activeKey === 1 ?
@@ -347,57 +327,21 @@ const  Viewer = (props) => {
          categories.map((item, index) =>{
            const categoryItems = modelProperties.filter(mprop => mprop.category === item);
            const categoryRatings = categoryItems.map(catItem => catItem.rating)
-           const classA1Ratings = categoryRatings.filter(x => x === "Class A1").length;
-           const classA2Ratings = categoryRatings.filter(x => x === "Class A2").length;
-           const classBRatings = categoryRatings.filter(x => x === "Class B").length;
-           const classCRatings = categoryRatings.filter(x => x === "Class C").length;
-           const classDRatings = categoryRatings.filter(x => x === "Class D").length;
-           const classERatings = categoryRatings.filter(x => x === "Class E").length;
-           const classFRatings = categoryRatings.filter(x => x === "Class F").length;
-           
+           const classA1Ratings = categoryRatings.filter(x => x === "30 mins").length;
+           const classA2Ratings = categoryRatings.filter(x => x === "60 mins").length;
+           const classBRatings = categoryRatings.filter(x => x === "90 mins").length;
+           const classCRatings = categoryRatings.filter(x => x === "120 mins").length;
+           console.log(classA1Ratings, classA2Ratings, classBRatings, classCRatings)
            return (
              <>
           <Collapsible trigger={item + " ("+ categoryItems.length+")"} key={index} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold'}}>
           <div className={"px-5 mb-4"}>
             <FireBIMBarChart 
                 title="Fire Rating Distribution" 
-                categories={['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F']} 
-                data={[classA1Ratings, classA2Ratings, classBRatings, classCRatings, classDRatings, classERatings, classFRatings]}
+                categories={fireRatingClasses} 
+                data={[classA1Ratings, classA2Ratings, classBRatings, classCRatings]}
             />
           </div>
-          {/* <Doughnut data={{
-              labels: ['Class A1', 'Class A2', 'Class B', 'Class C', 'Class D', 'Class E', 'Class F'],
-              datasets: [
-                {
-                  label: '# of Ratings',
-                  data: [classA1Ratings, classA2Ratings, classBRatings, classCRatings, classDRatings, classERatings, classFRatings],
-                  backgroundColor: [
-                    'rgba(255, 99, 132)',
-                    'rgba(54, 162, 235)',
-                    'rgba(255, 206, 86)',
-                    'rgba(75, 192, 192)',
-                    'rgba(153, 102, 255)',
-                    'rgba(255, 159, 64)',
-                    'rgba(45, 220, 56)',
-                    'rgba(54, 162, 235)', 
-                    'rgba(255, 205, 86)', 
-                    'rgba(65, 190, 30)',
-                    'rgba(255, 99, 132)'
-          
-                  ],
-                  borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)',
-                  ],
-                  borderWidth: 1,
-                },
-              ],
-            
-          }} /> */}
           <CDataTable
                     items={categoryItems}
                     fields={['id','category', 'component', 'fire rating']}
@@ -442,7 +386,7 @@ const  Viewer = (props) => {
         <CDataTable
                     items={modelProperties}
                     fields={['id','category', 'component', 'fire rating']}
-                    itemsPerPage={10}
+                    itemsPerPage={13}
                     pagination
                     tableFilter
                     sorter
