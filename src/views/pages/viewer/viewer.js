@@ -282,8 +282,8 @@ const  Viewer = (props) => {
         <CNavItem>
             <CNavLink
               href="#"
-              active={activeKey === 3}
-              onClick={() => setActiveKey(3)}
+              active={activeKey === 1}
+              onClick={() => setActiveKey(1)}
             >
               All Components
             </CNavLink>
@@ -301,8 +301,8 @@ const  Viewer = (props) => {
             <CNavLink
               href="#"
               data-tab="home"
-              active={activeKey === 1}
-              onClick={() => setActiveKey(1)}
+              active={activeKey === 3}
+              onClick={() => setActiveKey(3)}
             >
               Elements Distribution
             </CNavLink>
@@ -311,7 +311,7 @@ const  Viewer = (props) => {
          
     </CNav>
     <CTabContent>
-      {activeKey === 1 ?
+      {activeKey === 3 ?
         <div>
           <div className='pt-4 py-4' style={{minHeight: '350px'}}>
             <Doughnut data={categoryData} />
@@ -381,7 +381,7 @@ const  Viewer = (props) => {
           
       </div>
       : <div></div>} 
-      {activeKey === 3 ? <div>
+      {activeKey === 1 ? <div>
         {modelProperties.length > 0 ?  
         <CDataTable
                     items={modelProperties}
@@ -408,7 +408,7 @@ const  Viewer = (props) => {
                         <td style={{width: '20%'}}>{item.category}</td>
                       )
                     }}
-                    /> : <div>loading</div>}
+                    /> : <div style={{paddingTop: 5}}>...loading</div>}
                     
       </div> : <div></div>}
     </CTabContent>
