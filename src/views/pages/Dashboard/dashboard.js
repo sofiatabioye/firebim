@@ -315,7 +315,7 @@ const Dashboard = (props) => {
            <CRow style={{textAlign:"center"}}>
              <CCol lg="3" md="3" sm="12"><FontAwesomeIcon icon={faUsers} size="2x"/> </CCol>
              <CCol lg="9" md="9" sm="12">
-                 <span className="text-lg text-lg-center"> 6 </span>
+                 <span className="text-lg text-lg-center"> 3 </span>
                  <span className="d-block text-uppercase text-muted font-weight-bold text-sm-start"> Users</span>
              </CCol>
            </CRow>
