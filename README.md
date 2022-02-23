@@ -10,3 +10,8 @@
 
 Fire Rating for BIM Models
 
+## Installation
+
+Run npm install, npm run dev
+
+
