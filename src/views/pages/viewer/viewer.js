@@ -1,9 +1,8 @@
 import React, { useEffect, useState, } from 'react';
 import { useDispatch } from 'react-redux';
 import ForgeViewer from 'react-forge-viewer';
-import Helpers from './viewerHelpers';
 import axios from "axios";
-import { Doughnut, Bar } from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
 import FireBIMBarChart from './barChart';
 import Collapsible from 'react-collapsible';
 import { CRow, CCol, CNav, CNavItem, CNavLink, CDataTable, CTabContent, CCard } from '@coreui/react';
@@ -76,9 +75,6 @@ const  Viewer = (props) => {
  
   }, [dispatch, props]);
   
-  useEffect(() => {
-    Helpers.launchViewer('viewerDiv', urn, setModelProperties)
-  }, [urn]);
 
   const handleViewerError = (error) => {
     console.log('Error loading viewer.');
@@ -255,7 +251,6 @@ const  Viewer = (props) => {
     <>
     <CRow style={{height: '85vh', marginTop: '-30px'}}>
       <CCol xs="7" xl="7">
-      {/* <div className="fixed bg-fixed left-2 top-2 font-medium text-black z-10 shadow-md p-4"><button className="bg-gray-400 bg-hover-primary" onClick={()=>alert('dhdh')}> Back</button></div> */}
         <ForgeViewer
           version="7.0"
           urn={urn}
