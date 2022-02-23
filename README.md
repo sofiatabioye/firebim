@@ -6,7 +6,7 @@
 [npm-coreui-badge]: https://img.shields.io/npm/v/@coreui/coreui.png?style=flat-square
 [npm-coreui-react]: https://www.npmjs.com/package/@coreui/react
 
-# TIES Advanced Logistics
+# FIRE BIM
 
-Asset data intelligent management system using digital twins and internet of things (IoT)
+Fire Rating for BIM Models
 

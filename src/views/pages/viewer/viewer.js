@@ -170,11 +170,6 @@ const  Viewer = (props) => {
     const properties = [];
     viewer.addEventListener( Autodesk.Viewing.SELECTION_CHANGED_EVENT, event=>{
       viewer.getPropertyPanel(true).setVisible(true);
-      // const panel  = viewer.getPropertyPanel()
-      // panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"}, true);
-      // panel.setCategoryCollapsed({name: "Text", type: "category"}, true);
-      // panel.setCategoryCollapsed("Text", true);
-      // panel.setVisible(true);
  })
  viewer.addEventListener( Autodesk.Viewing.TOOLBAR_CREATED_EVENT, event =>{
   let buttonRefresh = new Autodesk.Viewing.UI.Button('report-button');

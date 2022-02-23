@@ -59,12 +59,6 @@ const ForgotPassword = React.lazy(() => import('./views/pages/forgotpassword/for
 const ResetPassword = React.lazy(() => import('./views/pages/resetpassword/resetpassword'));
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'));
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'));
-const HomePage = React.lazy( ()=> import('./views/pages/homepage/TIESLandingPage'));
-const ADP = React.lazy( ()=> import('./views/pages/homepage/ADP'));
-const BAT = React.lazy( ()=> import('./views/pages/homepage/BAT'));
-const ADIMS = React.lazy( ()=> import('./views/pages/homepage/ADIMS'));
-const ADS = React.lazy( ()=> import('./views/pages/homepage/ADS'));
-const ODR = React.lazy( ()=> import('./views/pages/homepage/ODR'));
 
 class App extends Component {
 
@@ -74,19 +68,11 @@ class App extends Component {
           <React.Suspense fallback={loading}>
             <Toaster />
             <Switch >
-              <Route exact path="/home" name="Home Page" component={withRouter(HomePage)} />
               <UnauthenticatedRoute exact path="/login" name="Login Page" component={withRouter(Login)} />
               <UnauthenticatedRoute exact path="/forgotpassword" name="Forgot Password Page" component={withRouter(ForgotPassword)} />
               <UnauthenticatedRoute exact path="/password-reset" name="Reset Password Page" component={withRouter(ResetPassword)} />
-              <Route exact path="/asset-datapoints" name="Asset Data Points" component={withRouter(ADP)} />
-              <Route exact path="/bim-asset-tagging" name="BIM Asset Tagging" component={withRouter(BAT)} />
-              <Route exact path="/asset-data-intelligent-management-system" name="ADIMS" component={withRouter(ADIMS)} />
-              <Route exact path="/asset-data-scanning" name="Asset Data Scanning" component={withRouter(ADS)} />
-              <Route exact path="/optimised-route-delivery" name="Optimised Route Delivery" component={withRouter(ODR)} />
-              {/* <UnauthenticatedRoute exact path="/register" name="Register Page" component={withRouter(Register)} /> */}
               <Route exact path="/404" name="Page 404" render={props => <Page404 {...props}/>} />
               <Route exact path="/500" name="Page 500" render={props => <Page500 {...props}/>} />
-              {/* <AuthenticatedRoute path="/" name="Home"> <TheLayout /></AuthenticatedRoute> */}
                <Route path="/" name="Home"> <TheLayout /></Route>
 
             </Switch>

@@ -1,9 +1,9 @@
 {
-  "name": "tiesadvancedlogistics",
+  "name": "FIREBIM",
   "version": "3.2.1",
-  "description": "TIES Advanced logistics for asset management",
+  "description": "FIREBIMApp",
   "author": {
-    "name": "Empyre Labs",
+    "name": "Empyre",
     "url": "#",
     "github": "https://github.com/sofiatabioye"
   },
@@ -12,7 +12,7 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/sofiatabioye/tiesfetui"
+    "url": "https://github.com/sofiatabioye/firebim"
   },
   "dependencies": {
     "@babel/core": "^7.14.6",
