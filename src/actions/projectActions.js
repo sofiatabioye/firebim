@@ -316,7 +316,7 @@ export function createProject(data) {
 
   return (dispatch) => {
     dispatch(addProjectBegins())
-    return axios.post(BASE_API_URL + '/projects', JSON.stringify(data), {headers: {
+    return axios.post(BASE_API_URL + '/project/create', JSON.stringify(data), {headers: {
       'Content-Type': 'application/json'
     }})
       .then((response) => {

@@ -43,12 +43,7 @@ const schema = {
     }
   },
 }
-const defaultAssetfields = ["TIES_0101_DesPh_Category", 
-"TIES_0105_DesPh_UniqueAssetID", "TIES_0111_DesPh_DesignedBy", "TIES_0111_DesPh_ContactNumber", "TIES_0115_DesPh_Status",
- "TIES_0116_DesPh_MaterialAndEC","IES_0201_ManPh_Manufacturer", "TIES_0207_ManPh_ManufacturedBy", "TIES_0208_ManPh_ManufacturedByContactNumber", "TIES_0215_ManPh_WarehouseAddress", "TIES_0217_ManPh_StoredBy", "TIES_0218_ManPh_StoredByContactNumber",
- "TIES_0301_DelPh_DeliveryCompanyName", "TIES_0306_DelPh_CollectedBy", "TIES_0307_DelPh_CollectedByContactNumber", "TIES_0309_DelPh_VehicleRegistrationNumber",
- "TIES_0401_InsPh_ConstructionSiteName", "TIES_0402_InsPh_ConstructionSiteAddress", "TIES_0405_InsPh_CollectedBy", "TIES_0406_InsPh_CollectedByContactNumber", "TIES_0414_InsPh_CraneType", "TIES_0426_InsPh_InstallationDateInstalledBy", "TIES_0427_InsPh_InstallationDateInstalledByContactNumber"
-];
+
 
 const Projects = () => {
   const [modal, setModal] = useState(false);
@@ -92,9 +87,9 @@ const Projects = () => {
 
   const handleAddProject = async(event) => {
     event.preventDefault();
+    console.log(formState)
     let formData = !!selectedOption ? {...formState.values,...{assetFields: selectedOption.map(item => item.id)}} : formState.values
-    if (formState.isValid && !!selectedOption){
-      
+    if (formState.isValid){
       await dispatch(createProject(formData));
     }
     setFormState({
@@ -227,28 +222,60 @@ const Projects = () => {
       <CForm className="form-horizontal" onSubmit={handleSubmit}>
         <CFormGroup row>
           <CCol md="3">
-            <CLabel htmlFor="hf-email">Title</CLabel>
+            <CLabel htmlFor="hf-email">Project Name</CLabel>
           </CCol>
           <CCol xs="12" md="9">
-            <CInput type="text" id="title" name="title" placeholder="Enter Project Title" onChange={handleChange} value={formState.values.title || ''} required />
+            <CInput type="text" id="title" name="title" placeholder="Enter Project Name" onChange={handleChange} value={formState.values.title || ''} required />
             <CValidFeedback>Looks good! </CValidFeedback>
             <CInvalidFeedback> Please enter valid title </CInvalidFeedback>
-            <CFormText className="help-block"> {hasError('title') ? formState.errors.title[0] : 'Please enter title'} </CFormText>
+            <CFormText className="help-block"> {hasError('title') ? formState.errors.title[0] : null} </CFormText>
           </CCol>
           <CCol md="3">
-            <CLabel htmlFor="description">Description</CLabel>
+            <CLabel htmlFor="projectId">Project ID</CLabel>
           </CCol>
           <CCol xs="12" md="9">
-            <CInput type="text" id="description" name="description" placeholder="Project Description" onChange={handleChange} value={formState.values.description || ''} required/>
-            <CFormText className="help-block">{hasError('description') ? formState.errors.description[0] : 'Please enter description'}</CFormText>
+            <CInput type="text" id="projectId" name="projectId" placeholder="Project ID" onChange={handleChange} value={formState.values.projectId || ''} required/>
+            <CFormText className="help-block">{hasError('projectId') ? formState.errors.projectId[0] : null}</CFormText>
+          </CCol>
+          <CCol xs="12" className="my-3 border-top"></CCol>
+          <CCol xs="12"><CLabel className="uppercase font-bold py-2" color="primary">Project details</CLabel></CCol>
+          <CCol md="3">
+            <CLabel htmlFor="description">Description of proposed works</CLabel>
+          </CCol>
+          <CCol xs="12" md="9">
+            <CInput type="text" id="description" name="description" placeholder="Project description" onChange={handleChange} value={formState.values.description || ''} required />
+            <CFormText className="help-block">{hasError('description') ? formState.errors.description[0] : null}</CFormText>
           </CCol>
           <CCol md="3">
-            <CLabel htmlFor="address">Address</CLabel>
+            <CLabel htmlFor="address">Project Address</CLabel>
           </CCol>
           <CCol xs="12" md="9">
-            <CInput type="text" id="address" name="address" placeholder="Project Address" onChange={handleChange} value={formState.values.address || ''} required />
-            <CFormText className="help-block">{hasError('address') ? formState.errors.address[0] : 'Please enter address'}</CFormText>
+            <CInput type="text" id="address" name="address" placeholder="Project address" onChange={handleChange} value={formState.values.address || ''} required />
+            <CFormText className="help-block">{hasError('address') ? formState.errors.address[0] : null}</CFormText>
           </CCol>
+          <CCol md="3">
+            <CLabel htmlFor="client">Client</CLabel>
+          </CCol>
+          <CCol xs="12" md="9">
+            <CInput type="text" id="client" name="client" placeholder="Client" onChange={handleChange} value={formState.values.client || ''} required />
+            <CFormText className="help-block">{hasError('client') ? formState.errors.client[0] : null}</CFormText>
+          </CCol>
+          <CCol md="3">
+            <CLabel htmlFor="client">Agent</CLabel>
+          </CCol>
+          <CCol xs="12" md="9">
+            <CInput type="text" id="agent" name="agent" placeholder="Agent" onChange={handleChange} value={formState.values.agent || ''} required />
+            <CFormText className="help-block">{hasError('agent') ? formState.errors.agent[0] : null}</CFormText>
+          </CCol>
+          <CCol xs="12" className="my-3 border-top"></CCol>
+          <CCol md="3" className="mt-3">
+            <CLabel htmlFor="purposeGroup" className="uppercase font-bold">Purpose Group</CLabel>
+          </CCol>
+          <CCol xs="12" md="9" className="mt-3">
+            <CInput type="text" id="purposeGroup" name="purposeGroup" placeholder="Purpose Group" onChange={handleChange} value={formState.values.purposeGroup || ''} required />
+            <CFormText className="help-block">{hasError('purposeGroup') ? formState.errors.purposeGroup[0] : null}</CFormText>
+          </CCol>
+          {/* </span> */}
         </CFormGroup>
         <CModalFooter>
           <CButton className="text-white sidebar-dark" type="submit">Submit</CButton>{' '}
@@ -268,7 +295,7 @@ const Projects = () => {
 
       <CRow>
         <CCol xs="12" xl="12" className="my-4 border-bottom mb-5">
-           <CButton className="float-right sidebar-dark" color="primary" size="lg" onClick={()=> setModal(true)}>
+           <CButton className="float-right sidebar-dark" color="primary" size="md" onClick={()=> setModal(true)}>
             Add New Project
           </CButton> 
           <h1>Projects</h1>
@@ -287,8 +314,21 @@ const Projects = () => {
                 </CCol>
             
           ))):<CSpinner />}
+
+          <CModal
+            show={modal}
+            onClose={setModal}
+          >
+            <CModalHeader closeButton>
+              <CModalTitle>Create New FireBIM Project</CModalTitle>
+            </CModalHeader>
+            <CModalBody>
+              {projectForm(handleAddProject, "add")}
+            </CModalBody>
+
+          </CModal>
         </CRow>
-         
+      
 
 
     </>

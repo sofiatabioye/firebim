@@ -6,6 +6,7 @@ import { Doughnut } from 'react-chartjs-2';
 import FireBIMBarChart from './barChart';
 import Collapsible from 'react-collapsible';
 import { CRow, CCol, CNav, CNavItem, CNavLink, CDataTable, CTabContent, CCard } from '@coreui/react';
+import Config from '../../../config';
 
 const Autodesk = window.Autodesk;
 const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
@@ -60,7 +61,7 @@ const  Viewer = (props) => {
   useEffect( () => {
 
     async function getToken(){
-      return axios.get(  'https://firebimapi.herokuapp.com/api/forge/token')
+      return axios.get( Config.BASE_API_URL+  '/forge/token')
       .then((response) => {
      
         setToken(response.data.data.token);
