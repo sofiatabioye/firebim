@@ -554,6 +554,7 @@ export function login(userData, history) {
 
   return (dispatch) => axios.post(BASE_API_URL + '/login', userData)
     .then((response) => {
+      console.log(response)
       const token = response.data.data.token;
       const user = response.data.data;
       localStorage.setItem('x-access-token', token);

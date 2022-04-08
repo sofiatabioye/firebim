@@ -296,10 +296,10 @@ export function getProjects() {
 
   return (dispatch) => {
     dispatch(getProjectsBegins())
-    return axios.get(BASE_API_URL + '/project/aspec/models')
+    return axios.get(BASE_API_URL + '/projects')
       .then((response) => {
         console.log(response)
-        dispatch(getProjectsSuccess(response.data.data.models, response.data.message));
+        dispatch(getProjectsSuccess(response.data.data, response.data.message));
       })
       .catch((error) => {
         console.log(error.response)
@@ -388,7 +388,7 @@ export function deleteProject(projectId) {
 export function uploadModel(data) {
   return (dispatch) => {
     dispatch(uploadModelBegins());
-    return axios.post(BASE_API_URL + "/models", data, {
+    return axios.post(BASE_API_URL + "/project/upload", data, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

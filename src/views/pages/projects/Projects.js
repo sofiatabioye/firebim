@@ -5,6 +5,7 @@ import {
   CButton,
   CCard,
   CCardBody,
+  CDataTable,
   CCol,
   CRow,
   CModal,
@@ -27,6 +28,7 @@ import { faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons'
 import Multiselect from 'multiselect-react-dropdown';
 import {createProject, updateProject, deleteProject, uploadModel, getProjects} from '../../../actions/projectActions';
 import Thumbnail from "../project/thumbnail.png";
+import { Link } from 'react-router-dom';
 
 
 const schema = {
@@ -50,14 +52,13 @@ const Projects = () => {
   const [projectModal, setProjectModal] = useState(false);
   const [projecti, setProject] = useState({});
   const [uploadModal, setUploadModal] = useState(false);
-
+  const [viewModal, setViewModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [selectedOption, setSelected] = useState(null);
-  const datapoints = useSelector(state => state.assetField.assetFields);
-  const projectt = useSelector(state => state.project.projects)
+  const [editMode, setEditMode] = useState('add');
   const [update, setUpdated] = useState(false);
+  const [uploading, setUploading] = useState(false);
   
-  const [projectDatapoints, setDatapoints] = useState([]);
   const dispatch = useDispatch();
   const [selectedFiles, setSelectedFiles] = useState(undefined);
   const [formState, setFormState] = useState({
@@ -66,8 +67,8 @@ const Projects = () => {
     touched: {},
     errors: {}
   });
-  const loggedInUser = useSelector(state => state.auth.user);
   
+  const fields = ['projectTitle','purposeGroup', 'address','actions']
   useEffect(() => {
     const errors = validate(formState.values, schema);
     setFormState(formState => ({
@@ -116,9 +117,7 @@ const Projects = () => {
   const handleUpdateProject = async (event) => {
     event.preventDefault();
     if (formState.isValid){
-  
-      let data = JSON.stringify({title: formState.values.title, address: formState.values.address, description: formState.values.description}, getCircularReplacer());
-      await dispatch(updateProject(projecti.id, data));
+      await dispatch(updateProject(projecti._id, formState.values));
     }
     setFormState({
       isValid: false,
@@ -126,8 +125,8 @@ const Projects = () => {
       touched: {},
       errors: {}
     });
-    await setSelected(null);
-    await setProjectModal(false);
+    setSelected(null);
+    setModal(false);
     setUpdated(true);
   };
 
@@ -164,8 +163,9 @@ const Projects = () => {
   }
 
   const handleEdit = (project) => {
-    setProjectModal(true);
+    setModal(true);
     setProject(project);
+    setEditMode("edit")
     setFormState({
       isValid: true,
       values: project,
@@ -190,22 +190,29 @@ const Projects = () => {
     setProject(project);
   };
   const handleDelete = async () => {
-   
-    if(projecti.id){
-      await dispatch(deleteProject(projecti.id));
+    if(projecti._id){
+      await dispatch(deleteProject(projecti._id));
       await setProject({});
       await dispatch(getProjects());
     }
     setDeleteModal(false);
   
   }
+  const openViewModal = (project) => {
+    setModal(false)
+    setDeleteModal(false)
+    setUploadModal(false)
+    setViewModal(true)
+    setProject(project)
+  }
+
+
 
   const handleUpload = (event) => {
     event.preventDefault();
     let formData = new FormData();
-    formData.append('sourceData', selectedFiles);
-    formData.append('title', projecti.title);
-    formData.append('projectId', projecti.id);
+    formData.append('model', selectedFiles);
+    formData.append('projectId', projecti._id);
     dispatch(uploadModel(formData));
     setFormState({
       isValid: false,
@@ -217,7 +224,7 @@ const Projects = () => {
   };
 
 
-  const projectForm = (handleSubmit, editMode) => {
+  const projectForm = (handleSubmit) => {
     return (
       <CForm className="form-horizontal" onSubmit={handleSubmit}>
         <CFormGroup row>
@@ -275,7 +282,6 @@ const Projects = () => {
             <CInput type="text" id="purposeGroup" name="purposeGroup" placeholder="Purpose Group" onChange={handleChange} value={formState.values.purposeGroup || ''} required />
             <CFormText className="help-block">{hasError('purposeGroup') ? formState.errors.purposeGroup[0] : null}</CFormText>
           </CCol>
-          {/* </span> */}
         </CFormGroup>
         <CModalFooter>
           <CButton className="text-white sidebar-dark" type="submit">Submit</CButton>{' '}
@@ -303,33 +309,161 @@ const Projects = () => {
        </CRow>
        <CRow>
           {projects && projects.length > 0 ?
-          (projects.map((item, index) => (
-                <CCol xs="6" xl="4" lg={4} md={3} className="my-2 border-bottom mb-5" key={index}>
-                    <CCard>
-                      <CCardHeader>{item.name}</CCardHeader>
-                      <CCardBody>
-                       <CLink to={"/viewer/"+ item.viewerurn}> <CImg src={"data:image/png;base64, "+ item.thumbnail}></CImg></CLink>
-                      </CCardBody>
-                    </CCard>
-                </CCol>
+          
+          (
+          //   projects.map((item, index) => (
+          //       <CCol xs="6" xl="4" lg={4} md={3} className="my-2 border-bottom mb-5" key={index}>
+          //           <CCard>
+          //             <CCardHeader>{item.name}</CCardHeader>
+          //             <CCardBody>
+          //              <CLink to={"/viewer/"+ item.viewerurn}> <CImg src={"data:image/png;base64, "+ item.thumbnail}></CImg></CLink>
+          //             </CCardBody>
+          //           </CCard>
+          //       </CCol>
             
-          ))):<CSpinner />}
+          // ))
+          <CDataTable
+            items={projects}
+            fields={fields}
+            itemsPerPage={10}
+            pagination
+            tableFilter
+            sorter
+            hover
+            scopedSlots = {{
+              'projectTitle':
+              (item) => (
+                <td>
+                {!!item.thumbnail ? <CImg
+                src={"data:image/png;base64, "+item.thumbnail}
+                align="left"
+                fluid
+                height={50}
+                width={50}
+                className="border block mr-2"
+              />: null }<Link to={"/viewer/"+item.viewerurn}><CLabel className="mt-2 block font-bold">{item.title}</CLabel></Link></td>
+              ),
+  
+              'actions':
+                (item)=>(
+                  <td className="px-4">
+                    <CButton className="" color="info" variant="ghost" onClick={() => openViewModal(item)}><CIcon name="cil-description" color="info" customClasses="c-sidebar-nav-icon" /></CButton>
+                   <CButton className="" color="primary" variant="ghost" onClick={() => handleEdit(item)}><CIcon name="cil-pencil" color="primary" customClasses="c-sidebar-nav-icon" /></CButton>
+                   <CButton className="" color="info" variant="ghost" onClick={() => openUploadModal(item)}><FontAwesomeIcon icon={faCloudUploadAlt}></FontAwesomeIcon> {!item.modelStorageId ?  'Upload Model' : 'Update Model'}</CButton>
+                   <CButton className="pr-3" color="danger" variant="ghost" onClick={() => openDeleteModal(item)}><CIcon name="cil-trash" customClasses="c-sidebar-nav-icon"/></CButton>
+                  </td>
+                )
+            }}
+        />
+          )
+          :<CSpinner />}
 
           <CModal
             show={modal}
             onClose={setModal}
           >
             <CModalHeader closeButton>
-              <CModalTitle>Create New FireBIM Project</CModalTitle>
+              <CModalTitle>{editMode ? 'Edit '+ projecti.title+ ' Project' : 'Create New FireBIM Project'}</CModalTitle>
             </CModalHeader>
             <CModalBody>
-              {projectForm(handleAddProject, "add")}
+               {projectForm(editMode=== 'add' ? handleAddProject: handleUpdateProject)}
+            </CModalBody>
+          </CModal>
+          <CModal
+            show={deleteModal}
+            onClose={setDeleteModal}
+            alignment="center"
+          >
+             <CModalHeader>
+             <CModalTitle>{projecti.title}</CModalTitle>
+            </CModalHeader> 
+            <CModalBody>
+            Are you sure you want to delete this project? 
+               {/* {projectForm(editMode=== 'add' ? handleAddProject: handleUpdateProject)} */}
+            </CModalBody>
+            <CModalFooter>
+              <CButton color="danger" onClick={handleDelete}>
+                Yes
+              </CButton>
+              <CButton color="primary" onClick={() => setDeleteModal(false)}>No</CButton>
+            </CModalFooter>
+          </CModal>
+          <CModal show={uploadModal}
+              onClose={openUploadModal}>
+              <CModalHeader closeButton> Upload Model</CModalHeader>
+              <CForm onSubmit={handleUpload}>
+                <CModalBody>
+                  <CFormGroup>
+                    <input type="file" name="model" id="model" accept=".rvt" onChange={handleChange} required />
+                  </CFormGroup>
+                  {uploading ? 
+                    <div className="float-left"><CSpinner size="sm"/> Uploading...</div> 
+                  : null } 
+                </CModalBody>
+                <CModalFooter>
+                  <CButton className="text-white bg-info" type="submit">Submit</CButton>{' '}
+                  <CButton
+                    color="secondary"
+                    onClick={() =>  setUploadModal(false)}
+                  >Cancel</CButton>
+                </CModalFooter>
+              </CForm>
+      </CModal>
+          <CModal
+            show={viewModal}
+            onClose={setViewModal}
+          >
+            <CModalHeader closeButton>
+              <CModalTitle>{projecti?.title} Project</CModalTitle>
+            </CModalHeader>
+            <CModalBody>
+              <CRow>
+                <CCol xs="12" md="4">
+                  <CLabel><b>Project ID</b></CLabel>
+                </CCol>
+                <CCol xs="12" md="8">
+                  <CLabel>{projecti.projectId}</CLabel>
+                </CCol>
+                <CCol xs="12" className="my-3 border-top"></CCol>
+                <CCol xs="12" md="4">
+                  <CLabel><b>Project Description</b></CLabel>
+                </CCol>
+                <CCol xs="12" md="8">
+                  <CLabel>{projecti.description}</CLabel>
+                </CCol>
+                <CCol xs="12" md="4">
+                  <CLabel><b>Project Address</b></CLabel>
+                </CCol>
+                <CCol xs="12" md="8">
+                  <CLabel>{projecti.address}</CLabel>
+                </CCol>
+                <CCol xs="12" md="4">
+                  <CLabel><b>Project Client</b></CLabel>
+                </CCol>
+                <CCol xs="12" md="8">
+                  <CLabel>{projecti.client}</CLabel>
+                </CCol>
+                <CCol xs="12" md="4">
+                  <CLabel><b>Project Agent</b></CLabel>
+                </CCol>
+                <CCol xs="12" md="8">
+                  <CLabel>{projecti.agent}</CLabel>
+                </CCol>
+                <CCol xs="12" className="my-3 border-top"></CCol>
+                <CCol xs="12" md="4">
+                  <CLabel><b>Project Purpose Group</b></CLabel>
+                </CCol>
+                <CCol xs="12" md="8">
+                  <CLabel>{projecti.purposeGroup}</CLabel>
+                </CCol>
+              </CRow>
             </CModalBody>
 
           </CModal>
+
         </CRow>
       
-
+         
 
     </>
   )

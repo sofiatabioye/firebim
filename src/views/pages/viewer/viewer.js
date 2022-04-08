@@ -373,6 +373,11 @@ const  Viewer = (props) => {
       </div>
       : <div></div>} 
       {activeKey === 1 ? <div>
+        <Collapsible trigger={"djd"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold'}}>
+          <div className={"px-5 mb-4"}>
+           jhi
+          </div>
+          </Collapsible>
         {modelProperties.length > 0 ?  
         <CDataTable
                     items={modelProperties}
