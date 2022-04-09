@@ -322,7 +322,7 @@ const  Viewer = (props) => {
            const classA2Ratings = categoryRatings.filter(x => x === "60 mins").length;
            const classBRatings = categoryRatings.filter(x => x === "90 mins").length;
            const classCRatings = categoryRatings.filter(x => x === "120 mins").length;
-           console.log(classA1Ratings, classA2Ratings, classBRatings, classCRatings)
+          //  console.log(classA1Ratings, classA2Ratings, classBRatings, classCRatings)
            return (
              <>
           <Collapsible trigger={item + " ("+ categoryItems.length+")"} key={index} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold'}}>

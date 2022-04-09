@@ -20,15 +20,15 @@ import {
   CInput,
   CFormText,
   CSpinner,
-  CModalFooter, CImg, CCardHeader, CLink
+  CModalFooter, CImg, CCardHeader, CLink, CSelect
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons'
 import Multiselect from 'multiselect-react-dropdown';
 import {createProject, updateProject, deleteProject, uploadModel, getProjects} from '../../../actions/projectActions';
-import Thumbnail from "../project/thumbnail.png";
 import { Link } from 'react-router-dom';
+import toastr from 'toastr';
 
 
 const schema = {
@@ -69,6 +69,7 @@ const Projects = () => {
   });
   
   const fields = ['projectTitle','purposeGroup', 'address','actions']
+  
   useEffect(() => {
     const errors = validate(formState.values, schema);
     setFormState(formState => ({
@@ -84,40 +85,58 @@ const Projects = () => {
   }, [formState.values, update]);
   
 
+  const options=  [{name: '1(a) Flat', id: 1, category: 'Residential (Dwellings)'},
+                   {name: '1(b) Terraced Building', id: 2, category: 'Residential (Dwellings)'},
+                   {name: '1(c) Semi-Detached', id: 3, category: 'Residential (Dwellings)'},
+                   {name: '2(a) Office Building', id: 4, category: 'Residential (Institutional)'},
+                  ]
 
+  const getPurposeGroups = (groupIds) => {
+    let groups = groupIds.split(',');
+    const groupNames  = groups.map((item) => {
+      let option = options.find(i => i.id === parseInt(item))
+      if(option){
+        return option.name
+      }
+      return null
+    });
+    return groupNames.toString()
+  }
+
+  const selectedPurposeGroups = (groupIds) => {
+    let groups = groupIds.split(',');
+    const selectedGroups  = groups.map((item) => {
+      return options.find(i => i.id === parseInt(item))
+    });
+    return selectedGroups
+  }
 
   const handleAddProject = async(event) => {
     event.preventDefault();
-    console.log(formState)
-    let formData = !!selectedOption ? {...formState.values,...{assetFields: selectedOption.map(item => item.id)}} : formState.values
-    if (formState.isValid){
+    
+    if(formState.isValid && !!selectedOption){
+      let purposeGroup = selectedOption.selected.map(item => item.id).join(',');
+      let formData = {...formState.values, ...{purposeGroup}}
       await dispatch(createProject(formData));
+      setFormState({
+        isValid: false,
+        values: {},
+        touched: {},
+        errors: {}
+      });
+      setModal(false);
+      setUpdated(true);
     }
-    setFormState({
-      isValid: false,
-      values: {},
-      touched: {},
-      errors: {}
-    });
-    await setModal(false);
-    setUpdated(true);
-  };
-  const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key, value) => {
-      if (typeof value === "object" && value !== null) {
-        if (seen.has(value)) {
-          return;
-        }
-        seen.add(value);
-      }
-      return value;
-    };
+    
   };
   const handleUpdateProject = async (event) => {
     event.preventDefault();
-    if (formState.isValid){
-      await dispatch(updateProject(projecti._id, formState.values));
+    
+    if (formState.isValid && !!selectedOption){
+        let purposeGroup = selectedOption.selected?.map(item => item.id).join(',');
+        const update = {...formState.values, ...{purposeGroup}}
+        await dispatch(updateProject(projecti._id, update)); 
+        setSelected(null);
     }
     setFormState({
       isValid: false,
@@ -165,6 +184,7 @@ const Projects = () => {
   const handleEdit = (project) => {
     setModal(true);
     setProject(project);
+    setSelected(!!project.purposeGroup ? selectedPurposeGroups(project.purposeGroup): {})
     setEditMode("edit")
     setFormState({
       isValid: true,
@@ -172,10 +192,13 @@ const Projects = () => {
       touched: {},
       errors: {}
     });
+    
   }
   const handleCloseEdit = () => {
-    setProjectModal(false);
+    setModal(false);
     setProject({});
+    setEditMode("add");
+    setSelected(null);
     setFormState({
       isValid: false,
       values: {},
@@ -206,6 +229,9 @@ const Projects = () => {
     setProject(project)
   }
 
+  const  handleSelected = (selected) => {
+    setSelected({ selected });
+  };
 
 
   const handleUpload = (event) => {
@@ -279,7 +305,19 @@ const Projects = () => {
             <CLabel htmlFor="purposeGroup" className="uppercase font-bold">Purpose Group</CLabel>
           </CCol>
           <CCol xs="12" md="9" className="mt-3">
-            <CInput type="text" id="purposeGroup" name="purposeGroup" placeholder="Purpose Group" onChange={handleChange} value={formState.values.purposeGroup || ''} required />
+          <Multiselect
+            options={options} // Options to display in the dropdown
+            selectedValues={selectedOption} // Preselected value to persist in dropdown
+            onSelect={handleSelected} // Function will trigger on select event
+            showCheckbox={true}
+            groupBy={'category'}
+            placeholder={"Select purpose group"}
+            displayValue="name" // Property name to display in the dropdown options
+            id="purposeGroup" 
+            name="purposeGroup"
+            required
+            />
+            {/* <CInput type="text" id="purposeGroup" name="purposeGroup" placeholder="Purpose Group" onChange={handleChange} value={formState.values.purposeGroup || ''} required /> */}
             <CFormText className="help-block">{hasError('purposeGroup') ? formState.errors.purposeGroup[0] : null}</CFormText>
           </CCol>
         </CFormGroup>
@@ -343,7 +381,10 @@ const Projects = () => {
                 className="border block mr-2"
               />: null }<Link to={"/viewer/"+item.viewerurn}><CLabel className="mt-2 block font-bold">{item.title}</CLabel></Link></td>
               ),
-  
+              'purposeGroup':
+              (item) => (
+                <td>{getPurposeGroups(item.purposeGroup)}</td>
+              ),
               'actions':
                 (item)=>(
                   <td className="px-4">
@@ -360,10 +401,10 @@ const Projects = () => {
 
           <CModal
             show={modal}
-            onClose={setModal}
+            onClose={handleCloseEdit}
           >
             <CModalHeader closeButton>
-              <CModalTitle>{editMode ? 'Edit '+ projecti.title+ ' Project' : 'Create New FireBIM Project'}</CModalTitle>
+              <CModalTitle>{editMode=== 'edit' ? 'Edit '+ projecti.title+ ' Project' : 'Create New FireBIM Project'}</CModalTitle>
             </CModalHeader>
             <CModalBody>
                {projectForm(editMode=== 'add' ? handleAddProject: handleUpdateProject)}
@@ -375,7 +416,7 @@ const Projects = () => {
             alignment="center"
           >
              <CModalHeader>
-             <CModalTitle>{projecti.title}</CModalTitle>
+             <CModalTitle>Delete {projecti.title}</CModalTitle>
             </CModalHeader> 
             <CModalBody>
             Are you sure you want to delete this project? 
@@ -454,7 +495,7 @@ const Projects = () => {
                   <CLabel><b>Project Purpose Group</b></CLabel>
                 </CCol>
                 <CCol xs="12" md="8">
-                  <CLabel>{projecti.purposeGroup}</CLabel>
+                  <CLabel>{!!projecti.purposeGroup ? getPurposeGroups(projecti.purposeGroup): ''}</CLabel>
                 </CCol>
               </CRow>
             </CModalBody>
