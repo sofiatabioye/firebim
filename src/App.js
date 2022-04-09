@@ -6,8 +6,6 @@ import jwt from 'jsonwebtoken';
 import {Toaster} from 'react-hot-toast';
 import AuthLayout from './views/pages/layouts/authPages';
 import HomePageLayout from './views/pages/layouts/homepage';
-import '../public/favicon.ico'
-
 import './scss/style.scss';
 
 const isAuthenticated = () => {
