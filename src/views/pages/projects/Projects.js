@@ -28,7 +28,6 @@ import { faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons'
 import Multiselect from 'multiselect-react-dropdown';
 import {createProject, updateProject, deleteProject, uploadModel, getProjects} from '../../../actions/projectActions';
 import { Link } from 'react-router-dom';
-import toastr from 'toastr';
 
 
 const schema = {
@@ -379,7 +378,7 @@ const Projects = () => {
                 height={50}
                 width={50}
                 className="border block mr-2"
-              />: null }<Link to={"/viewer/"+item.viewerurn}><CLabel className="mt-2 block font-bold">{item.title}</CLabel></Link></td>
+              />: null }<Link to={{pathname: "/viewer/"+item.viewerurn, state: {project: item, isRef: false} }}><CLabel className="mt-2 block font-bold">{item.title}</CLabel></Link></td>
               ),
               'purposeGroup':
               (item) => (
