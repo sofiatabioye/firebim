@@ -17,8 +17,8 @@ const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
 const  Viewer = (props) => {
   
   const [view, setViewable] = useState(null);
-  const [urn, setUrn] = useState(props.match.params.urn);
   const [project, setProject] = useState(props.location.state.project);
+  const [urn, setUrn] = useState(props.location.state.project.viewerurn);
   const [isRef, setIsRef] = useState(props.location.state.isRef);
   const [token, setToken] = useState({});
   const [viewer, setViewer] = useState(null);
@@ -76,10 +76,10 @@ const  Viewer = (props) => {
     }
     getToken();
     // setUrn(props.match.params.urn)
-    setUrn(project.viewerurn)
+    // setUrn(project.viewerurn)
 
  
-  }, [project.viewerurn]);
+  }, []);
   
 
   const handleViewerError = (error) => {
@@ -193,10 +193,10 @@ const  Viewer = (props) => {
 
   const handleDocumentError = (viewer, error) => {
     console.log('Error loading a document', viewer);
-    // if(viewer === 4 && !isRef){
-    //   setIsRef(true)
-    //   window.location.reload()
-    // }
+    if(viewer === 4 && !isRef){
+      setIsRef(true)
+      window.location.reload()
+    }
     
   }
 
@@ -313,7 +313,7 @@ const  Viewer = (props) => {
     <>
     <CRow style={{height: '85vh', marginTop: '-30px'}}>
       <CCol xs="7" xl="7">
-        <span style={{position: 'absolute', zIndex: 1001}} className="shadow p-2 w-100">{project.title} ({project.modelStorageId}) <span style={{float: 'right'}} className="mr-4"><CButton color="info" onClick={history.goBack}><CIcon name="cil-arrow-left" color="info" className="mr-2"/>Go Back</CButton></span></span>
+        <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2 w-100">{project.title} ({project.modelStorageId}) <span style={{float: 'right'}} className="mr-4"><CButton color="info" onClick={history.goBack}><CIcon name="cil-arrow-left" color="info" className="mr-2"/>Go Back</CButton></span></span>
         
         <ForgeViewer
           version="7.0"

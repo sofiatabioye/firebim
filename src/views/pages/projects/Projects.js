@@ -20,7 +20,7 @@ import {
   CInput,
   CFormText,
   CSpinner,
-  CModalFooter, CImg, CCardHeader, CLink, CSelect
+  CModalFooter, CImg, CCardHeader, CLink, CSelect, CTextarea
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -275,7 +275,8 @@ const Projects = () => {
             <CLabel htmlFor="description">Description of proposed works</CLabel>
           </CCol>
           <CCol xs="12" md="9">
-            <CInput type="text" id="description" name="description" placeholder="Project description" onChange={handleChange} value={formState.values.description || ''} required />
+            
+            <CTextarea type="text" id="description" name="description" placeholder="Project description" onChange={handleChange} value={formState.values.description || ''} required />
             <CFormText className="help-block">{hasError('description') ? formState.errors.description[0] : null}</CFormText>
           </CCol>
           <CCol md="3">
