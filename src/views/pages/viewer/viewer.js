@@ -193,10 +193,10 @@ const  Viewer = (props) => {
 
   const handleDocumentError = (viewer, error) => {
     console.log('Error loading a document', viewer);
-    if(viewer === 4 && !isRef){
-      setIsRef(true)
-      window.location.reload()
-    }
+    // if(viewer === 4 && !isRef){
+    //   setIsRef(true)
+    //   window.location.reload()
+    // }
     
   }
 
