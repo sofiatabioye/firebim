@@ -175,50 +175,12 @@ const Users = () => {
         <CCol xs="12" lg="12">
           <CCard className="shadow-lg">
             <CCardHeader>
-              User
-              <CButton variant="outline" active aria-pressed="true" className="float-right sidebar-dark text-white" onClick={() => setModal(!modal)} >
+              Users 
+              <CButton variant="outline" active aria-pressed="true" className="float-right sidebar-dark text-white relative" onClick={() => setModal(!modal)} >
                  Invite User
               </CButton>
-
             </CCardHeader>
-            <CModal
-              show={modal}
-              onClose={setModal}
-            >
-              <CModalHeader closeButton>
-                <CModalTitle>{edit ? "Update User":  "Invite New User" }</CModalTitle>
-              </CModalHeader>
-              <CForm className="form-horizontal">
-              <CModalBody>
-                  <CFormGroup row>
-                    <CCol md="3">
-                      <CLabel htmlFor="name">Name</CLabel>
-                    </CCol>
-                    <CCol xs="12" md="9">
-                      <CInput type="text" id="name" name="name" placeholder="Enter User Name..." onChange={handleChange} value={formState.values.name || ''} required />
-                      <CFormText className="help-block">Please enter username</CFormText>
-                    </CCol>
-                  </CFormGroup>
-                {edit ? null : <CFormGroup row>
-                    <CCol md="3">
-                      <CLabel htmlFor="email">Email Address</CLabel>
-                    </CCol>
-                    <CCol xs="12" md="9">
-                      <CInput type="text" id="email" name="email" placeholder="Enter Email..." onChange={handleChange} value={formState.values.email || ''} required />
-                      <CFormText className="help-block">Please enter email</CFormText>
-                    </CCol>
-                  </CFormGroup> }
-                 
-              </CModalBody>
-              <CModalFooter>
-                <CButton className="text-white sidebar-dark" type="submit">Submit</CButton>{' '}
-                <CButton
-                  color="secondary"
-                  onClick={() =>  handleCloseEdit()}
-                >Cancel</CButton>
-              </CModalFooter>
-            </CForm>
-            </CModal>
+           
             <CCardBody>
               <CDataTable
                 items={users}
@@ -241,6 +203,44 @@ const Users = () => {
               />
             </CCardBody>
           </CCard>
+          <CModal
+              show={modal}
+              onClose={setModal}
+            >
+              <CModalHeader closeButton>
+                <CModalTitle>{edit ? "Update User":  "Invite New User" }</CModalTitle>
+              </CModalHeader>
+              <CForm className="form-horizontal">
+              <CModalBody>
+                  <CFormGroup row>
+                    <CCol md="3">
+                      <CLabel htmlFor="name">Name</CLabel>
+                    </CCol>
+                    <CCol xs="12" md="9">
+                      <CInput type="text" id="name" name="name" placeholder="Enter User Name..." onChange={handleChange} value={formState.values.name || ''} required />
+                      <CFormText className="help-block">Please enter username</CFormText>
+                    </CCol>
+                  </CFormGroup>
+                 <CFormGroup row>
+                    <CCol md="3">
+                      <CLabel htmlFor="email">Email Address</CLabel>
+                    </CCol>
+                    <CCol xs="12" md="9">
+                      <CInput type="text" id="email" name="email" placeholder="Enter Email..." onChange={handleChange} value={formState.values.email || ''} required />
+                      <CFormText className="help-block">Please enter email</CFormText>
+                    </CCol>
+                  </CFormGroup> 
+                 
+              </CModalBody>
+              <CModalFooter>
+                <CButton className="text-white sidebar-dark" type="submit">Submit</CButton>{' '}
+                <CButton
+                  color="secondary"
+                  onClick={() =>  handleCloseEdit()}
+                >Cancel</CButton>
+              </CModalFooter>
+            </CForm>
+            </CModal>
           <CModal
             show={deleteModal}
             onClose={setDeleteModal}
