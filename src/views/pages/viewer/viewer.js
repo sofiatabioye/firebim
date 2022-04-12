@@ -1,13 +1,11 @@
-import React, { useEffect, useState, } from 'react';
+import React, { useCallback, useEffect, useState,useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import ForgeViewer from 'react-forge-viewer';
+import ModelViewer from './modelViewer';
 import axios from "axios";
-import { Doughnut } from 'react-chartjs-2';
-import FireBIMBarChart from './barChart';
 import CIcon from '@coreui/icons-react'
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
-import { CRow, CCol, CCard, CLabel, CButton } from '@coreui/react';
+import { CRow, CCol, CCard, CLabel, CButton, CTooltip } from '@coreui/react';
 import Config from '../../../config';
 
 
@@ -15,19 +13,22 @@ const Autodesk = window.Autodesk;
 const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
 
 const  Viewer = (props) => {
-  
+  const urn = props.match.params.urn
   const [view, setViewable] = useState(null);
   const [project, setProject] = useState(props.location.state.project);
-  const [urn, setUrn] = useState(props.location.state.project.viewerurn);
+  // const [urn, setUrn] = useState(props.match.params.urn);
   const [isRef, setIsRef] = useState(props.location.state.isRef);
   const [token, setToken] = useState({});
   const [viewer, setViewer] = useState(null);
+  const [trigger, setTrigger] = useState(false);
   const [modelProperties, setModelProperties] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoriesValues, setCategoriesValues] = useState([]);
   const [activeKey, setActiveKey] = useState(1)
   const dispatch = useDispatch();
   const history = useHistory();
+ 
+
   const categoryData = {
     labels: categories,
     datasets: [
@@ -67,7 +68,6 @@ const  Viewer = (props) => {
     async function getToken(){
       return axios.get( Config.BASE_API_URL+  '/forge/token')
       .then((response) => {
-     
         setToken(response.data.data.token);
       })
       .catch((error) =>
@@ -75,15 +75,14 @@ const  Viewer = (props) => {
       );
     }
     getToken();
-    // setUrn(props.match.params.urn)
-    // setUrn(project.viewerurn)
-
+    // setUrn(props.match.params.urn) 
  
-  }, []);
+  }, [project.viewerurn]);
   
 
   const handleViewerError = (error) => {
-    console.log('Error loading viewer.');
+    console.log('Error loading viewer.', error);
+    
   }
 
   /* after the viewer loads a document, we need to select which viewable to
@@ -192,12 +191,10 @@ const  Viewer = (props) => {
   }
 
   const handleDocumentError = (viewer, error) => {
-    console.log('Error loading a document', viewer);
-    if(viewer === 4 && !isRef){
-      setIsRef(true)
-      window.location.reload()
-    }
-    
+    console.log('Error loading a document', viewer, error); 
+    // if(viewer === 4){
+    //   setTrigger(true)
+    // }   
   }
 
   const handleModelLoaded = (viewer, model) => {
@@ -258,6 +255,7 @@ const  Viewer = (props) => {
   const handleModelError = (viewer, error) => {
     console.log('Error loading the model.', error, viewer);
     
+    
   }
 
   const getForgeToken = () => {
@@ -296,44 +294,34 @@ const  Viewer = (props) => {
         onAccessToken(
           token.access_token, token.expires_in);
     }
-    
 
   }
-
-  const openPropertiesPanel = (item) =>{
-      viewer.select(item.dbId);
-      viewer.fitToView(item.dbId, viewer.model);
-      const panel  = viewer.getPropertyPanel()
-      panel.setCategoryCollapsed({name: "IFC Parameters", type: "category"});
-      panel.setCategoryCollapsed({name: "Text", type: "category"}, false);
-  }
-
+  
+  
 
   return  (
     <>
     <CRow style={{height: '85vh', marginTop: '-30px'}}>
       <CCol xs="7" xl="7">
         <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2 w-100">{project.title} ({project.modelStorageId}) <span style={{float: 'right'}} className="mr-4"><CButton color="info" onClick={history.goBack}><CIcon name="cil-arrow-left" color="info" className="mr-2"/>Go Back</CButton></span></span>
-        
-        <ForgeViewer
-          version="7.0"
-          urn={project.viewerurn}
+        <ModelViewer 
+          urn={urn}
           view={view}
-          headless={false}
-          onViewerError={handleViewerError}
-          onTokenRequest={handleTokenRequested}
-          onDocumentLoad={handleDocumentLoaded}
-          onDocumentError={handleDocumentError}
-          onModelLoad={handleModelLoaded}
-          onModelError={handleModelError}
-          />
-        
+          handleDocumentError={handleDocumentError}
+          handleDocumentLoaded={handleDocumentLoaded}
+          handleModelError={handleModelError}
+          handleModelLoaded={handleModelLoaded}
+          handleTokenRequested={handleTokenRequested}
+          handleViewerError={handleViewerError}
+          trigger={trigger}
+          setTrigger={setTrigger}
+        />
       </CCol>
       <CCol xs="5" xl="5" className="pb-2" style={{borderLeft: '3px solid'}}>
      
         <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', overflow: 'scroll'}}>
        
-          <Collapsible trigger={"General Info"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}}>
+          <Collapsible trigger={"Projet Information"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available" >
             <hr/>
             <div className={"px-2 my-4"}>
               <CRow>
@@ -364,23 +352,54 @@ const  Viewer = (props) => {
            
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Fire Rating"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}}>
+          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
             <div className={"px-5 mb-4"}>
-             Fire Ratings
+             Fire Rating
+            
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}}>
+         
+          <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
             <div className={"px-5 mb-4"}>
-            Sprinklers
+            </div>
+          </Collapsible>
+
+          <hr/>
+          <Collapsible trigger={"Compartmentation"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4"}>
+            <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Report"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}}>
+          <Collapsible trigger={"Fire doors"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
             <div className={"px-5 mb-4"}>
-            <CButton className="float-right sidebar-dark" color="primary" size="md">
-             Generate Report
-            </CButton> 
+            <span class="tooltiptext">Insufficient information</span>
+            </div>
+          </Collapsible>
+          <hr/>
+          <Collapsible trigger={"Distance (to exit, etc.)"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+         
+            <div className={"px-5 mb-4"}>
+             <span class="tooltiptext">Insufficient information</span>
+            </div>
+          </Collapsible>
+          <hr/>
+          <Collapsible trigger={"Number of stair and protection"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4"}>
+            <span class="tooltiptext">Insufficient information</span>
+            </div>
+          </Collapsible>
+          <hr/>
+          <Collapsible trigger={"Means of warning"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4"}>
+              <span class="tooltiptext">Insufficient information</span>
+            </div>
+          </Collapsible>
+          <hr/>
+          <Collapsible trigger={"Fire services and access"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4"}>
+            <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
