@@ -362,57 +362,63 @@ const  Viewer = (props) => {
                 <CCol><CLabel className="font-bold">Purpose Group:</CLabel></CCol>
                 <CCol>{getPurposeGroups(project.purposeGroup)}</CCol>
               </CRow>
+               <hr/>
+              <CRow className="mt-2">
+                <CCol><CLabel className="font-bold">Top floor height:</CLabel></CCol>
+                <CCol>Greater than 5m and less than 11m</CCol>
+              </CRow>
             </div>
+            <div></div>
            
           </Collapsible>
           <hr/>
           <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
-            <div className={"px-5 mb-4"}>
-             Fire Rating
-            
+            <div className={"px-5 mb-4 mt-4"}>
+              60 minutes for elements of structure
             </div>
           </Collapsible>
           <hr/>
          
           <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
-            <div className={"px-5 mb-4"}>
+            <div className={"px-5 mb-4 mt-4"}>
+              No sprinkler protection is required
             </div>
           </Collapsible>
 
           <hr/>
-          <Collapsible trigger={"Compartmentation"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
-            <div className={"px-5 mb-4"}>
+          <Collapsible trigger={"Compartmentation"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Fire doors"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
-            <div className={"px-5 mb-4"}>
+          <Collapsible trigger={"Fire doors"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Distance (to exit, etc.)"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+          <Collapsible trigger={"Distance (to exit, etc.)"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
          
-            <div className={"px-5 mb-4"}>
+            <div className={"px-5 mb-4 mt-4"}>
              <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Number of stair and protection"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
-            <div className={"px-5 mb-4"}>
+          <Collapsible trigger={"Number of stair and protection"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Means of warning"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
-            <div className={"px-5 mb-4"}>
+          <Collapsible trigger={"Means of warning"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4 mt-4"}>
               <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Fire services and access"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
-            <div className={"px-5 mb-4"}>
+          <Collapsible trigger={"Fire services and access"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+            <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>

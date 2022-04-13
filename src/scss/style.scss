@@ -382,6 +382,12 @@ a.videospin:hover {
   text-align: left;
   color: #fff;
 }
+.open-collapsible2 {
+  width: 100%;
+  background: #142a4c;
+  text-align: left;
+  color: #fff;
+}
 
 .open-collapsible::before {
   content: "";
@@ -395,6 +401,17 @@ a.videospin:hover {
   font-style: italic;
 }
 
+.open-collapsible2::before {
+  content: "";
+  background: url("../views/images/cancel.png") no-repeat;
+  height: 30px;
+  width: 30px;
+  margin: 0 6px 0 0;
+  float: left;
+  display: block;
+  font-weight: bold;
+  font-style: italic;
+}
 
 .firebim-collapsible .tooltiptext {
   visibility: hidden;
