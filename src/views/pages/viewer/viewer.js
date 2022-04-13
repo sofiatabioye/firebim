@@ -163,13 +163,20 @@ const  Viewer = (props) => {
     let buttonReport = new Autodesk.Viewing.UI.Button('report-button');
     buttonReport.addClass('report');
     buttonReport.setToolTip('Generate Report');
-    
+
+    let buttonBack = new Autodesk.Viewing.UI.Button('back-button');
+    buttonBack.addClass('goBack');
+    buttonBack.setToolTip('Go back');
+    buttonBack.onClick = function (e) {
+      history.goBack();
+      return false;
+  }
 
     this.subToolbarRefresh = new Autodesk.Viewing.UI.ControlGroup('my-refresh-toolbar');
     this.subToolbarRefresh.addControl(buttonRefresh);
     this.subToolbarRefresh.addControl(buttonReport);
-    console.log(this.subToolbarRefresh)
-    // viewer.toolbar.addControl(this.subToolbarUpdate);
+    this.subToolbarRefresh.addControl(buttonBack);
+
     this.viewer.toolbar.addControl(this.subToolbarRefresh);
   }
 
@@ -220,17 +227,6 @@ const  Viewer = (props) => {
       viewer.getPropertyPanel(true).setVisible(true);
      })
 
-    viewer.addEventListener( Autodesk.Viewing.TOOLBAR_CREATED_EVENT, event =>{
-      let buttonRefresh = new Autodesk.Viewing.UI.Button('report-button');
-      buttonRefresh.addClass('report');
-      buttonRefresh.setToolTip('Generate Report');
-      buttonRefresh.onClick = function (e) {
-        return false;
-      }
-      let subToolbarUpdate = new Autodesk.Viewing.UI.ControlGroup('firebim-toolbar');
-      subToolbarUpdate.addControl(buttonRefresh);
-      viewer.toolbar.addControl(subToolbarUpdate);
-     });
 
     getAllLeafComponents(viewer, function (dbIds) {
       viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating'],
@@ -321,7 +317,7 @@ const  Viewer = (props) => {
     <>
     <CRow style={{height: '85vh', marginTop: '-30px'}}>
       <CCol xs="7" xl="7">
-        <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2 w-100">{project.title} ({project.modelStorageId}) <span style={{float: 'right'}} className="mr-4"><CButton color="info" onClick={history.goBack}><CIcon name="cil-arrow-left" color="info" className="mr-2"/>Go Back</CButton></span></span>
+        <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2">{project.title} ({project.modelStorageId})</span>
          <ModelViewer 
           urn={urn}
           view={view}
@@ -339,7 +335,7 @@ const  Viewer = (props) => {
      
         <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', overflow: 'scroll'}}>
        
-          <Collapsible trigger={"Projet Information"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available" >
+          <Collapsible trigger={"Project Information"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available" >
             <hr/>
             <div className={"px-2 my-4"}>
               <CRow>
@@ -370,7 +366,7 @@ const  Viewer = (props) => {
            
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
+          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
             <div className={"px-5 mb-4"}>
              Fire Rating
             
@@ -378,7 +374,7 @@ const  Viewer = (props) => {
           </Collapsible>
           <hr/>
          
-          <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
+          <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
             <div className={"px-5 mb-4"}>
             </div>
           </Collapsible>

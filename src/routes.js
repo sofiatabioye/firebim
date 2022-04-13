@@ -17,7 +17,7 @@ const routes = [
   { path: '/projects', exact: true, name: 'Projects', component: Projects },
   { path: '/users', exact: true, name: 'Users', component: Users },
   { path: '/dashboard', exact: true, name: 'Dashboard', component: Dashboard },
-  { path: '/viewer/:urn', exact: true, name: 'Model Viewer', component: Viewer },
+  { path: '/projects/viewer/:urn', exact: true, name: 'Model Viewer', component: Viewer },
   { path: '/project/:projectId', exact: true, name: 'Project', component: Project },
   { path: '/change-password', exact: true, name: 'Change Password', component: ChangePassword },
   { path: '/resetpassword/:resetToken:/id', exact: true, name: 'Reset Password', component: ResetPassword },

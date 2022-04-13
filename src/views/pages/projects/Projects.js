@@ -380,7 +380,7 @@ const Projects = () => {
                 height={50}
                 width={50}
                 className="border block mr-2"
-              />: null }{!!item.thumbnail ? <Link to={{pathname: "/viewer/"+item.viewerurn, state: {project: item, isRef: false} }}><CLabel className="mt-2 block font-bold">{item.title}</CLabel></Link>: <CLabel className="mt-2 block font-bold">{item.title}</CLabel>}</td>
+              />: null }{!!item.thumbnail ? <Link to={{pathname: "/projects/viewer/"+item.viewerurn, state: {project: item, isRef: false} }}><CLabel className="mt-2 block font-bold">{item.title}</CLabel></Link>: <CLabel className="mt-2 block font-bold">{item.title}</CLabel>}</td>
               ),
               'purposeGroup':
               (item) => (
