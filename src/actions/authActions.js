@@ -26,9 +26,7 @@ import {
 } from './actionTypes';
 
 
-// const BASE_API_URL = "https://adims.herokuapp.com/api";
 const BASE_API_URL = Config.BASE_API_URL
-// "https://advancedlogisticsapi-nqt92.ondigitalocean.app/api";
 
 /**
  * @export
@@ -463,8 +461,6 @@ export function logout(history) {
     localStorage.removeItem('user')
     setAuthorizationToken(false);
     dispatch(setCurrentUser({}));
-    // dispatch(getProjectsSuccess({}))
-    // history.push('/login');
     history.push('/login')
     toast.success('You have logged out successfully');
   };

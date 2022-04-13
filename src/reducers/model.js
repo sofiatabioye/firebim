@@ -11,11 +11,6 @@ import {
 export default (state = { loading: false, message: '', errors: [], assets: [] }, action = {}) => {
   switch (action.type) {
 
-    case GET_ACCESS_TOKEN:
-      return { ...state,
-        loading: false,
-        accessToken: action.credentials
-      };
     case GET_ASSET_DATA:
       return {
         ...state,

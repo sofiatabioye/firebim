@@ -1,33 +1,34 @@
-import React, { useCallback, useEffect, useState,useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import ModelViewer from './modelViewer';
 import axios from "axios";
 import CIcon from '@coreui/icons-react'
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
-import { CRow, CCol, CCard, CLabel, CButton, CTooltip } from '@coreui/react';
+import { CRow, CCol, CCard, CLabel, CButton } from '@coreui/react';
 import Config from '../../../config';
-
+import { getForgeToken } from '../../../actions/projectActions';
 
 const Autodesk = window.Autodesk;
 const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
 
 const  Viewer = (props) => {
   const urn = props.match.params.urn
+  
   const [view, setViewable] = useState(null);
-  const [project, setProject] = useState(props.location.state.project);
-  // const [urn, setUrn] = useState(props.match.params.urn);
-  const [isRef, setIsRef] = useState(props.location.state.isRef);
+  const [project, setProject] = useState(props.location.state.project)
   const [token, setToken] = useState({});
   const [viewer, setViewer] = useState(null);
   const [trigger, setTrigger] = useState(false);
   const [modelProperties, setModelProperties] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoriesValues, setCategoriesValues] = useState([]);
-  const [activeKey, setActiveKey] = useState(1)
   const dispatch = useDispatch();
   const history = useHistory();
- 
+
+
+  //
+  // console.log(access_token)
 
   const categoryData = {
     labels: categories,
@@ -62,6 +63,16 @@ const  Viewer = (props) => {
     ],
   };
 
+  async function getToken(){
+    return axios.get( Config.BASE_API_URL+  '/forge/token')
+    .then((response) => {
+      setToken(response.data.data.token);
+      dispatch(getForgeToken(response.data.data.token))
+    })
+    .catch((error) =>
+      error
+    );
+  }
 
   useEffect( () => {
     
@@ -69,15 +80,16 @@ const  Viewer = (props) => {
       return axios.get( Config.BASE_API_URL+  '/forge/token')
       .then((response) => {
         setToken(response.data.data.token);
+        dispatch(getForgeToken(response.data.data.token))
+        localStorage.setItem('token',JSON.stringify(response.data.data.token) )
       })
       .catch((error) =>
         error
       );
     }
     getToken();
-    // setUrn(props.match.params.urn) 
  
-  }, [project.viewerurn]);
+  }, [dispatch]);
   
 
   const handleViewerError = (error) => {
@@ -192,9 +204,7 @@ const  Viewer = (props) => {
 
   const handleDocumentError = (viewer, error) => {
     console.log('Error loading a document', viewer, error); 
-    // if(viewer === 4){
-    //   setTrigger(true)
-    // }   
+  
   }
 
   const handleModelLoaded = (viewer, model) => {
@@ -258,15 +268,6 @@ const  Viewer = (props) => {
     
   }
 
-  const getForgeToken = () => {
-       
-        return {
-          access_token: token.access_token,
-          expires_in: token.expires_in,
-          token_type: "Bearer"
-        };
-
-  }
   const options=  [{name: '1(a) Flat', id: 1, category: 'Residential (Dwellings)'},
     {name: '1(b) Terraced Building', id: 2, category: 'Residential (Dwellings)'},
     {name: '1(c) Semi-Detached', id: 3, category: 'Residential (Dwellings)'},
@@ -284,19 +285,36 @@ const  Viewer = (props) => {
     });
     return groupNames.toString()
   }
+
+  const getForgeTokenn = () => {
+    return {
+      access_token: token.access_token,
+      expires_in: token.expires_in,
+      token_type: "Bearer"
+    };
+
+}
+
   /* Once the viewer has initialized, it will ask us for a forge token so it can
   access the specified document. */
   const handleTokenRequested = async (onAccessToken) => {
 
     if (onAccessToken) {
-      let token = await getForgeToken();
-      if (token)
+      let tokenn = getForgeTokenn();
+     
+      if(tokenn.access_token === undefined){
+        let b = JSON.parse(localStorage.getItem('token'))
         onAccessToken(
-          token.access_token, token.expires_in);
+          b.access_token, b.expires_in)
+        this.forceUpdate()
+       
+      }
+      if (tokenn)
+        onAccessToken(
+          tokenn.access_token, tokenn.expires_in);
     }
 
   }
-  
   
 
   return  (
@@ -304,7 +322,7 @@ const  Viewer = (props) => {
     <CRow style={{height: '85vh', marginTop: '-30px'}}>
       <CCol xs="7" xl="7">
         <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2 w-100">{project.title} ({project.modelStorageId}) <span style={{float: 'right'}} className="mr-4"><CButton color="info" onClick={history.goBack}><CIcon name="cil-arrow-left" color="info" className="mr-2"/>Go Back</CButton></span></span>
-        <ModelViewer 
+         <ModelViewer 
           urn={urn}
           view={view}
           handleDocumentError={handleDocumentError}
@@ -315,7 +333,7 @@ const  Viewer = (props) => {
           handleViewerError={handleViewerError}
           trigger={trigger}
           setTrigger={setTrigger}
-        />
+        /> 
       </CCol>
       <CCol xs="5" xl="5" className="pb-2" style={{borderLeft: '3px solid'}}>
      

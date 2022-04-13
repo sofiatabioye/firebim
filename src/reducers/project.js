@@ -14,6 +14,7 @@ import {
   DELETE_PROJECT_BEGINS,
   DELETE_PROJECT_SUCCESS,
   DELETE_PROJECT_FAILURE,
+  GET_ACCESS_TOKEN
 } from '../actions/actionTypes';
 
 // eslint-disable-next-line import/no-anonymous-default-export
@@ -98,6 +99,12 @@ export default (state = { loading: false, message: '', errors: [], projects: [],
         loading: false,
         errors: action.errors
       };
+    case GET_ACCESS_TOKEN:
+      return { ...state,
+        loading: false,
+        _accessToken: action.token
+      };
     default: return state;
   }
+
 };

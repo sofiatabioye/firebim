@@ -10,7 +10,7 @@ import {
   UPLOAD_MODEL_BEGINS, UPLOAD_MODEL_SUCCESS, UPLOAD_MODEL_FAILURE,
   UPDATE_PROJECT_MODELS_BEGINS, UPDATE_PROJECT_MODELS_SUCCESS, UPDATE_PROJECT_MODELS_FAILURE,
   DOWNLOAD_MODEL_BEGINS, DOWNLOAD_MODEL_SUCCESS, DOWNLOAD_MODEL_FAILURE,
-  GET_PROJECT_USERS_BEGINS, GET_PROJECT_USERS_SUCCESS, GET_PROJECT_USERS_FAILURE
+  GET_PROJECT_USERS_BEGINS, GET_PROJECT_USERS_SUCCESS, GET_PROJECT_USERS_FAILURE, GET_ACCESS_TOKEN
 } from "./actionTypes";
 
 const BASE_API_URL = Config.BASE_API_URL
@@ -286,6 +286,17 @@ export function updateModelFailure(error) {
   };
 }
 
+/**
+ * @export
+ * @params {message}
+ * @returns {error} update project model fails
+ */
+ export function getForgeToken(token) {
+  return {
+    type: GET_ACCESS_TOKEN,
+    token
+  };
+}
 
 /**
  * @export
@@ -298,7 +309,7 @@ export function getProjects() {
     dispatch(getProjectsBegins())
     return axios.get(BASE_API_URL + '/projects')
       .then((response) => {
-        console.log(response)
+        // console.log(response)
         dispatch(getProjectsSuccess(response.data.data, response.data.message));
       })
       .catch((error) => {
