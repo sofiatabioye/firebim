@@ -4,7 +4,7 @@ import validate from 'validate.js';
 import {
   CButton,
   CCard,
-  CCardBody,
+  CTooltip,
   CDataTable,
   CCol,
   CRow,
@@ -24,7 +24,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons'
+import { faCloudUploadAlt, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import Multiselect from 'multiselect-react-dropdown';
 import {createProject, updateProject, deleteProject, uploadModel, getProjects} from '../../../actions/projectActions';
 import { Link } from 'react-router-dom';
@@ -91,6 +91,7 @@ const Projects = () => {
                   ]
 
   const getPurposeGroups = (groupIds) => {
+    console.log(groupIds);
     let groups = groupIds.split(',');
     const groupNames  = groups.map((item) => {
       let option = options.find(i => i.id === parseInt(item))
@@ -114,8 +115,8 @@ const Projects = () => {
     event.preventDefault();
     
     if(formState.isValid && !!selectedOption){
-      let purposeGroup = selectedOption.selected.map(item => item.id).join(',');
-      let formData = {...formState.values, ...{purposeGroup}}
+      // let purposeGroup = selectedOption.selected.map(item => item.id).join(',');
+      let formData = {...formState.values}
       await dispatch(createProject(formData));
       setFormState({
         isValid: false,
@@ -130,12 +131,9 @@ const Projects = () => {
   };
   const handleUpdateProject = async (event) => {
     event.preventDefault();
-    
-    if (formState.isValid && !!selectedOption){
-        let purposeGroup = selectedOption.selected?.map(item => item.id).join(',');
-        const update = {...formState.values, ...{purposeGroup}}
+    if (formState.isValid){
+        const update = {...formState.values}
         await dispatch(updateProject(projecti._id, update)); 
-        setSelected(null);
     }
     setFormState({
       isValid: false,
@@ -214,7 +212,7 @@ const Projects = () => {
   const handleDelete = async () => {
     if(projecti._id){
       await dispatch(deleteProject(projecti._id));
-      await setProject({});
+      setProject({});
       await dispatch(getProjects());
     }
     setDeleteModal(false);
@@ -303,10 +301,40 @@ const Projects = () => {
           </CCol>
           <CCol xs="12" className="my-3 border-top"></CCol>
           <CCol md="3" className="mt-3">
-            <CLabel htmlFor="purposeGroup" className="uppercase font-bold">Purpose Group</CLabel>
+            <CLabel htmlFor="purposeGroup" className="uppercase font-bold">Purpose Group </CLabel>
+            <CTooltip
+                content={'click me for more info on purpose group classifications'}
+                placement="right"
+              >
+               <FontAwesomeIcon icon={faInfoCircle} onClick={() => window.open('https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/937931/ADB_Vol1_Dwellings_2019_edition_inc_2020_amendments.pdf', '_blank')}></FontAwesomeIcon>
+            </CTooltip>
+           
           </CCol>
           <CCol xs="12" md="9" className="mt-3">
-          <Multiselect
+          <CSelect
+                custom
+                name="purposeGroup"
+                id="purposeGroup"
+                onChange={handleChange}
+                value={formState.values.purposeGroup || ''}
+                required
+              >
+                <option value="">Please select</option>
+                <option value="1(a) Flat"> 1(a) Residential Dwellings (Flat)</option>
+                <option value="1(b) Terraced Building">1(b) Residential Dwellings (Terraced Building)</option>
+                <option value="1(c) Semi-Detached">1(c) Residential Dwellings (Semi-Detached)</option>
+                <option value="2(a) Residential(Institutional)">2(a) Residential(Institutional)</option>
+                <option value="2(b) Residential(Other)">2(b) Residential(Other)</option>
+                <option value="(3) Offices or premises used for admininstration, etc">(3) Office</option>
+                <option value="(4) Shops and Commercial">(4) Shops and Commercial</option>
+                <option value="(5) Assembly and Recreation">(5) Assembly and Recreation</option>
+                <option value="(6) Industrial">(6) Industrial</option>
+                <option value="(7a)  Storage and other nonresidential">(7a) Storage and other nonresidential</option>
+                <option value="(7b)  Storage and other nonresidential">7(b) Storage and other nonresidential (Car parks designed to admit and accommodate only cars, motorcycles and passenger
+or light goods vehicles that weigh a maximum of 2500kg gross.)</option>
+              </CSelect>
+              
+          {/* <Multiselect
             options={options} // Options to display in the dropdown
             selectedValues={selectedOption} // Preselected value to persist in dropdown
             onSelect={handleSelected} // Function will trigger on select event
@@ -317,7 +345,7 @@ const Projects = () => {
             id="purposeGroup" 
             name="purposeGroup"
             required
-            />
+            /> */}
             {/* <CInput type="text" id="purposeGroup" name="purposeGroup" placeholder="Purpose Group" onChange={handleChange} value={formState.values.purposeGroup || ''} required /> */}
             <CFormText className="help-block">{hasError('purposeGroup') ? formState.errors.purposeGroup[0] : null}</CFormText>
           </CCol>
@@ -384,7 +412,7 @@ const Projects = () => {
               ),
               'purposeGroup':
               (item) => (
-                <td>{getPurposeGroups(item.purposeGroup)}</td>
+                <td>{item.purposeGroup}</td>
               ),
               'actions':
                 (item)=>(
@@ -420,8 +448,7 @@ const Projects = () => {
              <CModalTitle>Delete {projecti.title}</CModalTitle>
             </CModalHeader> 
             <CModalBody>
-            Are you sure you want to delete this project? 
-               {/* {projectForm(editMode=== 'add' ? handleAddProject: handleUpdateProject)} */}
+              Are you sure you want to delete this project? 
             </CModalBody>
             <CModalFooter>
               <CButton color="danger" onClick={handleDelete}>
@@ -494,9 +521,15 @@ const Projects = () => {
                 <CCol xs="12" className="my-3 border-top"></CCol>
                 <CCol xs="12" md="4">
                   <CLabel><b>Project Purpose Group</b></CLabel>
+                  <CTooltip
+                    content={'click me for more info on purpose group classifications'}
+                    placement="right"
+                  >
+                  <FontAwesomeIcon icon={faInfoCircle} onClick={() => window.open('https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/937931/ADB_Vol1_Dwellings_2019_edition_inc_2020_amendments.pdf', '_blank')}></FontAwesomeIcon>
+                </CTooltip>
                 </CCol>
                 <CCol xs="12" md="8">
-                  <CLabel>{!!projecti.purposeGroup ? getPurposeGroups(projecti.purposeGroup): ''}</CLabel>
+                  <CLabel>{!!projecti.purposeGroup ? projecti.purposeGroup: ''}</CLabel>
                 </CCol>
               </CRow>
             </CModalBody>

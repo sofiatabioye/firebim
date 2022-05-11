@@ -67,43 +67,8 @@ const TheSidebar = (props) => {
 
 
     let nav = user && user.role === 'admin' ? _navAdmin  : _navAdmin;
-    var filteredNav = nav.filter(function(item) { return item.route !== "/base"; }); 
-   
-    // if(projects && projects.length > 0 ){
-    //   projects.filter((project) => {
-    //   const navExists = nav.find(item => item.name === project.title);
-    //   if(!!project.model && !navExists) {
-    //     project.self = project;
-    //     let result =  {
-    //       _tag: 'CSidebarNavDropdown',
-    //       name: project.title,
-    //       route: '/base',
-    //       icon: 'cil-notes',
-    //       _children: [
-    //         {
-    //           _tag: 'CSidebarNavItem',
-    //           name: 'Project Details',
-    //           to: `/project/${project.id}/${project.model.id}`,
-    //           icon: 'cil-layers'
-    //         },
-    //         {
-    //           _tag: 'CSidebarNavItem',
-    //           name: 'Project DataPoints',
-    //           to: `/project/${project.id}/datapoints`,
-    //           icon: 'cil-list'
-    //         },
-    //         {
-    //           _tag: 'CSidebarNavItem',
-    //           name: 'Project Asset Data',
-    //           to: `/project/model/${project.model.id}/assets`,
-    //           icon: 'cil-list'
-    //         }
-    //       ],
-    //     }
-    //     filteredNav.push(result);
-      // }  })
-      setNav(filteredNav)
-    // }
+    // var filteredNav = nav.filter(function(item) { return item.route !== "/base"; }); 
+    setNav(nav)
 
   }, [projects, user])
 

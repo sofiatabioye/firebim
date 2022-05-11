@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import ModelViewer from './modelViewer';
 import axios from "axios";
-import CIcon from '@coreui/icons-react'
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
-import { CRow, CCol, CCard, CLabel, CButton } from '@coreui/react';
+import { CRow, CCol, CCard, CLabel, CSelect} from '@coreui/react';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Config from '../../../config';
 import { getForgeToken } from '../../../actions/projectActions';
+import { calculateFireRating } from './fireRating';
 
 const Autodesk = window.Autodesk;
 const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
@@ -23,12 +25,18 @@ const  Viewer = (props) => {
   const [modelProperties, setModelProperties] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoriesValues, setCategoriesValues] = useState([]);
+  const [modelFloor, setModelFloors] = useState([]);
+  const [identifiedFloors, setIdentifiedFloors] = useState([]);
+  const [selectedDbId, setSelectedDbId] = useState([]);
+  const [lowestFloor, setLowestFloor] = useState({});
+  const [highestFloor, setHighestFloor] = useState({});
+  const [topfloorHieght, setTopfloorHeight] = useState(0);
+  const [fireRating, setFireRating] = useState({});
+  const [viewerWidth, setViewerWidth] = useState(7);
+  const [sidebarWidth, setSidebarWidth] = useState(5);
+  const pageRef = useRef(null);
   const dispatch = useDispatch();
   const history = useHistory();
-
-
-  //
-  // console.log(access_token)
 
   const categoryData = {
     labels: categories,
@@ -215,7 +223,6 @@ const  Viewer = (props) => {
   }
 
   const handleModelLoaded = (viewer, model) => {
-    // console.log(viewer, '...viewer')
     setViewer(viewer);
     viewer.addEventListener(
       Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
@@ -224,44 +231,68 @@ const  Viewer = (props) => {
       })
     const properties = [];
     viewer.addEventListener( Autodesk.Viewing.SELECTION_CHANGED_EVENT, event=>{
-      viewer.getPropertyPanel(true).setVisible(true);
+      viewer.getPropertyPanel(true).setVisible(false);
      })
-
-
+    
+    const modelFloors = [];
+    let lowest;
+    let highest;
     getAllLeafComponents(viewer, function (dbIds) {
-      viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating'],
+      viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating', 'Level', 'Height Offset From Level', 'Elevation at Top', 'Area'],
       function(elements){
         for(let i=0; i< elements.length; i++) {
           const random = Math.floor(Math.random() * fireRatingClasses.length);
           let nodeName = viewer.model.getInstanceTree().getNodeName(elements[i].dbId);
+         
+          if(nodeName.includes('Floor') && elements[i].properties[3].displayValue === 0){
+            modelFloors.push({nodeName: nodeName, dbId:elements[i].dbId, elevation: elements[i].properties[5].displayValue, area: elements[i].properties[4].displayValue})
+          }
           let category = elements[i].properties[0]!== undefined ? elements[i].properties[0].displayValue.replace("Revit", "").trim(): '';
           // let rating =  elements[i].properties[1] !== undefined ? elements[i].properties[1].displayValue: '';
           let rating = fireRatingClasses[random]
           if(elements[i].properties[0]!== undefined && !categories.includes(category) ){
             categories.push(category);
-        
           }
+          
           properties.push({id: i+1, component: nodeName, category: category, rating: rating, dbId: elements[i].dbId})
         }
-      
         setModelProperties(properties)
         const categ = properties.reduce((acc, cur) => {
           acc[cur.category] = (acc[cur.category] || 0) + 1
           return acc;
        }, {})
-       setCategories(Object.keys(categ));
+       setCategories(Object.keys(categ)); 
        setCategoriesValues(Object.values(categ));
-    
+       const sortedModelFloors = modelFloors.sort((a,b)=> a.elevation - b.elevation)
+       setIdentifiedFloors(sortedModelFloors)
+       // set Lowest floors
+       if(Math.abs(sortedModelFloors[0].area - sortedModelFloors[1].area) > 500
+         &&  sortedModelFloors[1].area > sortedModelFloors[0].area){
+          lowest = sortedModelFloors[1];
+      }else{
+        lowest = sortedModelFloors[0]
+      }
+      // set Highest Floor
+      if(Math.abs(sortedModelFloors[sortedModelFloors.length-1].area - sortedModelFloors[sortedModelFloors.length-2].area) > 500
+        && sortedModelFloors[sortedModelFloors.length-2].area > sortedModelFloors[sortedModelFloors.length-1].area){
+          highest = sortedModelFloors[sortedModelFloors.length-2];
+      }else{
+        highest = sortedModelFloors[sortedModelFloors.length-1]
+      }
+      setLowestFloor(lowest);
+      setHighestFloor(highest);
+      calculateTopFloorHeight(lowest, highest);
       })
-    })
+    });
     
   }
-
-
+  const calculateTopFloorHeight = (lowestFloor, highestFloor) => {
+    const height = highestFloor.elevation - lowestFloor.elevation
+    setTopfloorHeight((height/1000).toFixed(2));
+    setFireRating(calculateFireRating((height/1000).toFixed(2)));
+  }
   const handleModelError = (viewer, error) => {
     console.log('Error loading the model.', error, viewer);
-    
-    
   }
 
   const options=  [{name: '1(a) Flat', id: 1, category: 'Residential (Dwellings)'},
@@ -311,12 +342,26 @@ const  Viewer = (props) => {
     }
 
   }
-  
+  const selectViewerElement = (type) => {
+    let selected = highestFloor.dbId;
+    if(type=== 'ground') {
+      selected = lowestFloor.dbId 
+    }
+    viewer.select(selected);
+    viewer.fitToView(selected);
+  }
+
+  const triggerSidebar = (event) => {
+     event.preventDefault();
+     const sidebarSelection = pageRef.current.querySelector("#sidebar");
+     sidebarSelection.style.display = 'none';
+     setViewerWidth(12);
+  }
 
   return  (
     <>
-    <CRow style={{height: '85vh', marginTop: '-30px'}}>
-      <CCol xs="7" xl="7">
+    <CRow style={{height: '85vh', marginTop: '-30px'}} innerRef={el => {pageRef.current = el} }>
+      <CCol xs={viewerWidth} xl={viewerWidth} id="viewer">
         <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2">{project.title} ({project.modelStorageId})</span>
          <ModelViewer 
           urn={urn}
@@ -331,8 +376,9 @@ const  Viewer = (props) => {
           setTrigger={setTrigger}
         /> 
       </CCol>
-      <CCol xs="5" xl="5" className="pb-2" style={{borderLeft: '3px solid'}}>
-     
+      {/* <div onClick={triggerSidebar} className="absolute z-5000" style={{bottom: '10%', left: '80%'}}><FontAwesomeIcon icon={faArrowRight} /></div> */}
+      <CCol xs={sidebarWidth} xl={sidebarWidth} className="pb-2" style={{borderLeft: '3px solid'}} id="sidebar">
+       
         <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', overflow: 'scroll'}}>
        
           <Collapsible trigger={"Project Information"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available" >
@@ -364,24 +410,79 @@ const  Viewer = (props) => {
               </CRow>
                <hr/>
               <CRow className="mt-2">
-                <CCol><CLabel className="font-bold">Top floor height:</CLabel></CCol>
-                <CCol>Greater than 5m and less than 11m</CCol>
+                <CCol><CLabel className="font-bold">Ground floor:</CLabel></CCol>
+                <CCol onClick={() => selectViewerElement('ground')}>      
+                  <CSelect
+                    custom
+                    name="groundfloor"
+                    id="groundfloor"
+                    value={''}
+                    required
+                    disabled
+                  >
+                <option value=""> {identifiedFloors.length > 0 ? lowestFloor?.nodeName: 'Please Select'}</option>
+              </CSelect>
+        
+                  </CCol>
               </CRow>
+              <CRow className="mt-2">
+                <CCol><CLabel className="font-bold">Top floor:</CLabel></CCol>
+                <CCol onClick={() => selectViewerElement('top')}>
+                  <CSelect
+                    custom
+                    name="groundfloor"
+                    id="groundfloor"
+                    value={''}
+                    required
+                    disabled
+                  >
+                <option value=""> {identifiedFloors.length > 0 ? highestFloor?.nodeName: 'Please Select'}</option>
+              </CSelect>
+                </CCol>
+              </CRow>
+              <CRow className="mt-2">
+                <CCol><CLabel className="font-bold">Top Floor Height:</CLabel></CCol>
+                <CCol>{identifiedFloors.length > 0 ? topfloorHieght + 'm': null}</CCol>
+              </CRow>
+              {/* <CRow className="mt-2">
+                <CCol><CLabel className="font-bold">Lowest Basement Height</CLabel></CCol>
+                <CCol>{identifiedFloors.length > 0 ? identifiedFloors[0]?.elevation + 'mm': null}</CCol>
+              </CRow> */}
             </div>
             <div></div>
            
           </Collapsible>
           <hr/>
           <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
-            <div className={"px-5 mb-4 mt-4"}>
-              60 minutes for elements of structure
-            </div>
+            <CRow className={"px-5 mb-4 mt-4 w-full"}>
+              {fireRating?
+                 <CRow > 
+                  <CRow style={{width: '100%'}} >
+                    <CCol><CLabel className="font-bold">Rating:</CLabel></CCol>
+                    <CCol>{fireRating.rating} </CCol>
+                  </CRow>
+                  <CRow style={{width: '100%'}}>
+                    <CCol><CLabel className="font-bold">Description:</CLabel></CCol>
+                    <CCol>{fireRating.description}</CCol>
+                  </CRow>
+                  <CRow style={{width: '100%'}} className="mt-2">
+                    <CCol><CLabel className="font-bold">DSS Display:</CLabel></CCol>
+                    <CCol>{fireRating.dssDisplay}</CCol>
+                  </CRow>
+                 </CRow>
+              : 'N/A'}
+            </CRow>
           </Collapsible>
           <hr/>
          
           <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
             <div className={"px-5 mb-4 mt-4"}>
-              No sprinkler protection is required
+              {fireRating ? 
+              <CRow>
+                <CRow>{fireRating?.sprinkler === 'Yes' ? 'Sprinkler protection is required' :  'No sprinkler protection is required'}</CRow>
+                <CRow>{fireRating?.sprinklerText !== '' ?  fireRating.sprinklerText: ''}</CRow>
+              </CRow>
+              : 'N/A'}
             </div>
           </Collapsible>
 
@@ -425,6 +526,7 @@ const  Viewer = (props) => {
           <hr/>
         </CCard>
       </CCol>
+      
       </CRow>
       </>
     );
