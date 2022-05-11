@@ -24,22 +24,24 @@ const solutionRoutes = [
 const UnauthenticatedRoute = ({ component: Component, ...rest }) => 
   
   (
-  
   <Route {...rest} render={(props) => (
     !isAuthenticated()
       ? solutionRoutes.includes(rest.location.pathname)  ? <HomePageLayout><Component {...props} /></HomePageLayout> : <AuthLayout><Component {...props} /></AuthLayout>
-      : <Redirect to='/' />
+      : <Redirect to='/login' />
   )} />
   );
 
 
-const AuthenticatedRoute = ({ component: Component, ...rest }) => (
+const AuthenticatedRoute = ({ component: Component, ...rest }) => 
+  {
+ return (
+   isAuthenticated() ?
   <Route {...rest} render={(props) => (
-    isAuthenticated()
-      ? <Component {...props} />
-      : <Redirect to='/login' />
-  )} />
-);
+    <Component {...props} />
+  )} /> : 
+  <Redirect to='/login' /> 
+ )
+  };
 
 const loading = (
   <div className="pt-3 text-center">
@@ -70,7 +72,7 @@ class App extends Component {
               <UnauthenticatedRoute exact path="/password-reset" name="Reset Password Page" component={withRouter(ResetPassword)} />
               <Route exact path="/404" name="Page 404" render={props => <Page404 {...props}/>} />
               <Route exact path="/500" name="Page 500" render={props => <Page500 {...props}/>} />
-               <Route path="/" name="Home"> <TheLayout /></Route>
+              <AuthenticatedRoute path="/" name="Home"> <TheLayout /></AuthenticatedRoute>
 
             </Switch>
           </React.Suspense>
