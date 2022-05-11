@@ -114,7 +114,7 @@ const Projects = () => {
   const handleAddProject = async(event) => {
     event.preventDefault();
     
-    if(formState.isValid && !!selectedOption){
+    if(formState.isValid){
       // let purposeGroup = selectedOption.selected.map(item => item.id).join(',');
       let formData = {...formState.values}
       await dispatch(createProject(formData));
