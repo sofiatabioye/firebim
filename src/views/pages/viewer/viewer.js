@@ -348,7 +348,7 @@ const  Viewer = (props) => {
       selected = lowestFloor.dbId 
     }
     viewer.select(selected);
-    viewer.fitToView(selected);
+    viewer.fitToView([selected], viewer.model);
   }
 
   const triggerSidebar = (event) => {

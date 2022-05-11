@@ -230,13 +230,14 @@ const Projects = () => {
     setSelected({ selected });
   };
 
-
-  const handleUpload = (event) => {
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+  const handleUpload = async (event) => {
     event.preventDefault();
     let formData = new FormData();
     formData.append('model', selectedFiles);
     formData.append('projectId', projecti._id);
-    dispatch(uploadModel(formData));
+    setUploading(true);
+    await dispatch(uploadModel(formData));
     setFormState({
       isValid: false,
       values: {},
@@ -244,7 +245,12 @@ const Projects = () => {
       errors: {}
     });
     setUpdated(true);
+    setUploading(false);
+    setUploadModal(false);
     dispatch(getProjects());
+    // delay(10000);
+    // window.location.reload();
+    return false;
   };
 
 
@@ -303,7 +309,7 @@ const Projects = () => {
           <CCol md="3" className="mt-3">
             <CLabel htmlFor="purposeGroup" className="uppercase font-bold">Purpose Group </CLabel>
             <CTooltip
-                content={'click me for more info on purpose group classifications'}
+                content={'click for more info on purpose group classifications'}
                 placement="right"
               >
                <FontAwesomeIcon icon={faInfoCircle} onClick={() => window.open('https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/937931/ADB_Vol1_Dwellings_2019_edition_inc_2020_amendments.pdf', '_blank')}></FontAwesomeIcon>
@@ -465,9 +471,9 @@ or light goods vehicles that weigh a maximum of 2500kg gross.)</option>
                   <CFormGroup>
                     <input type="file" name="model" id="model" accept=".rvt" onChange={handleChange} required />
                   </CFormGroup>
-                  {uploading ? 
+                  {uploading === true ? 
                     <div className="float-left"><CSpinner size="sm"/> Uploading...</div> 
-                  : null } 
+                  : null }
                 </CModalBody>
                 <CModalFooter>
                   <CButton className="text-white bg-info" type="submit">Submit</CButton>{' '}
@@ -522,7 +528,7 @@ or light goods vehicles that weigh a maximum of 2500kg gross.)</option>
                 <CCol xs="12" md="4">
                   <CLabel><b>Project Purpose Group</b></CLabel>
                   <CTooltip
-                    content={'click me for more info on purpose group classifications'}
+                    content={'click for more info on purpose group classifications'}
                     placement="right"
                   >
                   <FontAwesomeIcon icon={faInfoCircle} onClick={() => window.open('https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/937931/ADB_Vol1_Dwellings_2019_edition_inc_2020_amendments.pdf', '_blank')}></FontAwesomeIcon>
