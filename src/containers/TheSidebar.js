@@ -13,8 +13,6 @@ import {
   CSidebarNavItem,
 } from '@coreui/react'
 import CIcon from "@coreui/icons-react";
-import Logo from "../views/images/logowhite.png";
-
 
 
 const _navAdmin =  [
@@ -67,7 +65,6 @@ const TheSidebar = (props) => {
 
 
     let nav = user && user.role === 'admin' ? _navAdmin  : _navAdmin;
-    // var filteredNav = nav.filter(function(item) { return item.route !== "/base"; }); 
     setNav(nav)
 
   }, [projects, user])

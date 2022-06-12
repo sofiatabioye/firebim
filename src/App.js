@@ -13,21 +13,14 @@ const isAuthenticated = () => {
   return !!token && !(jwt.decode(token).exp < Date.now() / 1000);
 }
 
-const solutionRoutes = [
-  '/asset-datapoints',
-  '/bim-asset-tagging',
-  '/asset-data-intelligent-management-system',
-  '/asset-data-scanning',
-  '/optimised-route-delivery'
-];
 
 const UnauthenticatedRoute = ({ component: Component, ...rest }) => 
   
   (
   <Route {...rest} render={(props) => (
     !isAuthenticated()
-      ? solutionRoutes.includes(rest.location.pathname)  ? <HomePageLayout><Component {...props} /></HomePageLayout> : <AuthLayout><Component {...props} /></AuthLayout>
-      : <Redirect to='/login' />
+     ? <AuthLayout><Component {...props} /></AuthLayout>
+      : <Redirect to='/' />
   )} />
   );
 
@@ -58,6 +51,7 @@ const ForgotPassword = React.lazy(() => import('./views/pages/forgotpassword/for
 const ResetPassword = React.lazy(() => import('./views/pages/resetpassword/resetpassword'));
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'));
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'));
+const Signup = React.lazy( ()=> import('./views/pages/signup/Signup'));
 
 class App extends Component {
 
@@ -72,6 +66,7 @@ class App extends Component {
               <UnauthenticatedRoute exact path="/password-reset" name="Reset Password Page" component={withRouter(ResetPassword)} />
               <Route exact path="/404" name="Page 404" render={props => <Page404 {...props}/>} />
               <Route exact path="/500" name="Page 500" render={props => <Page500 {...props}/>} />
+              <UnauthenticatedRoute exact path="/sign-up" name="Sign up" component={withRouter(Signup)} />
               <AuthenticatedRoute path="/" name="Home"> <TheLayout /></AuthenticatedRoute>
 
             </Switch>

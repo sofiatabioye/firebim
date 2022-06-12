@@ -10,9 +10,8 @@ import { CContainer, CFade } from '@coreui/react'
 // routes config
 import routes from '../routes'
 import jwt from "jsonwebtoken";
-import {setCurrentUser, getUsers, getModelAssetsData, getUser} from "../actions/authActions";
+import {setCurrentUser, getUsers, getUser, getInvites} from "../actions/authActions";
 import { getProjects } from "../actions/projectActions";
-import {getAssetCategories, getAssetFields} from "../actions/assetActions";
 import setAuthorizationToken from "../utils/setAuthToken";
 
 
@@ -43,13 +42,11 @@ const TheContent = () => {
         dispatch(setCurrentUser( foundUser));
       }
       dispatch(getProjects());
-      dispatch(getAssetFields());
-      dispatch(getAssetCategories());
-      dispatch(getModelAssetsData(1));
+     
       dispatch(getUser(loggedIn.id));
-    
-      if ( loggedInUser && JSON.parse(loggedInUser).role === 'admin') {
+      if ( loggedInUser && JSON.parse(loggedInUser).user.role === 'admin') {
       dispatch(getUsers());
+      dispatch(getInvites());
       }
 
 

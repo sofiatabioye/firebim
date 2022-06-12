@@ -20,27 +20,24 @@ import {
   CRow, CSelect
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import userData from './userData';
 import validate from "validate.js";
-import {inviteUser, deleteUser, updateUser} from "../../../actions/authActions";
+import {inviteUser, deleteUser, updateUser, getUsers, deleteUserInvite} from "../../../actions/authActions";
 
-
-const getBadge = status => {
-  switch (status) {
-    case 'Active': return 'success'
-    case 'Inactive': return 'secondary'
-    case 'Pending': return 'warning'
-    case 'Banned': return 'danger'
-    default: return 'primary'
-  }
-};
-const schema = {
-  name: {
+const schemaAdmin = {
+  role: {
     presence: {allowEmpty: false, message: 'is required'},
     length: {
       maximum: 32
     }
   },
+  email: {
+    presence: {allowEmpty: false, message: 'is required'},
+    length: {
+      maximum: 32
+    }
+  }
+}
+const schema = {
   role: {
     presence: {allowEmpty: false, message: 'is required'},
     length: {
@@ -53,16 +50,16 @@ const schema = {
       maximum: 32
     }
   },
-  projectId: {
-    presence: {allowEmpty: false, message: 'is required'},
+  project: {
+    presence: {allowEmpty: true, message: 'is required'},
     length: {
-      maximum: 32
+      maximum: 64
     }
   },
 }
 
 
-const fields = ['name', 'email','project', 'actions'];
+const fields = ['firstName', 'lastName', 'email','role', 'project', 'actions'];
 
 const Users = () => {
   const dispatch = useDispatch();
@@ -70,6 +67,7 @@ const Users = () => {
   const [edit, setEdit] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [user, setUser] = useState({});
+  const [userType, setUserType] = useState(undefined);
   const [formState, setFormState] = useState({
     isValid: false,
     values: {},
@@ -78,12 +76,11 @@ const Users = () => {
   });
 
   const projects = useSelector(state => state.project.projects);
-  // const users = useSelector(state => state.user.users);
-  const users = userData;
+  const users = useSelector(state => state.user.users);
+  const invites = useSelector(state => state.user.invites);
 
   useEffect(() => {
-    const errors = validate(formState.values, schema);
-
+    const errors = formState.role === 'admin' ? validate(formState.values, schema): validate(formState.values, schemaAdmin);
     setFormState(formState => ({
       ...formState,
       isValid: errors ? false : true,
@@ -93,7 +90,6 @@ const Users = () => {
 
   const handleChange = event => {
     event.persist();
-    // console.log(event);
     setFormState(formState => ({
       ...formState,
       values: {
@@ -118,6 +114,7 @@ const Users = () => {
     if (formState.isValid){
       dispatch(inviteUser(formState.values));
     }
+    
     setFormState({
       isValid: false,
       values: {},
@@ -131,9 +128,14 @@ const Users = () => {
 
   const handleDeleteField = (event) => {
     event.preventDefault();
-    dispatch(deleteUser(user.id));
+    if(userType === 'invite'){
+      dispatch(deleteUserInvite(user.id));
+    } else {
+      dispatch(deleteUser(user._id));
+    }
     setUser({});
     setDeleteModal(false);
+    dispatch(getUsers());
   }
   const handleUpdateUser = (event) => {
     event.preventDefault();
@@ -141,9 +143,10 @@ const Users = () => {
     setUser({});
     setModal(false);
   }
-  const openDeleteModal =(field) => {
+  const openDeleteModal =(field, type) => {
     setDeleteModal(true);
     setUser(field);
+    setUserType(type);
   }
 
   const openEditModal =(field) => {
@@ -197,7 +200,13 @@ const Users = () => {
                         <CButton className="pl-6 px-3" color="primary" variant="ghost" onClick={() => openEditModal(item)}><CIcon name="cil-pencil" color="info" customClasses="c-sidebar-nav-icon" /></CButton>
                         <CButton className="pl-6" color="danger" variant="ghost" onClick={() => openDeleteModal(item)}><CIcon name="cil-trash" customClasses="c-sidebar-nav-icon"/></CButton>
                       </td>
-                    )
+                    ),
+                  'project':
+                   (item)=> (
+                    <td className="px-4">
+                    {item.project}
+                    </td>
+                   )
 
                 }}
               />
@@ -210,26 +219,66 @@ const Users = () => {
               <CModalHeader closeButton>
                 <CModalTitle>{edit ? "Update User":  "Invite New User" }</CModalTitle>
               </CModalHeader>
-              <CForm className="form-horizontal">
+              <CForm className="form-horizontal" onSubmit={handleInvite}>
               <CModalBody>
-                  <CFormGroup row>
-                    <CCol md="3">
-                      <CLabel htmlFor="name">Name</CLabel>
-                    </CCol>
-                    <CCol xs="12" md="9">
-                      <CInput type="text" id="name" name="name" placeholder="Enter User Name..." onChange={handleChange} value={formState.values.name || ''} required />
-                      <CFormText className="help-block">Please enter username</CFormText>
-                    </CCol>
-                  </CFormGroup>
                  <CFormGroup row>
                     <CCol md="3">
                       <CLabel htmlFor="email">Email Address</CLabel>
                     </CCol>
                     <CCol xs="12" md="9">
-                      <CInput type="text" id="email" name="email" placeholder="Enter Email..." onChange={handleChange} value={formState.values.email || ''} required />
-                      <CFormText className="help-block">Please enter email</CFormText>
+                      <CInput 
+                        type="text" 
+                        id="email" 
+                        name="email" 
+                        placeholder="Enter Email..." 
+                        onChange={handleChange} 
+                        value={formState.values.email || ''} 
+                        required 
+                      />
+                      <CFormText className="help-block">{hasError('email') ? formState.errors.email[0] : null}</CFormText>
                     </CCol>
                   </CFormGroup> 
+                  <CFormGroup row>
+                    <CCol md="3">
+                      <CLabel htmlFor="role">Role</CLabel>
+                    </CCol>
+                    <CCol xs="12" md="9">
+                      <CSelect
+                        custom
+                        name="role"
+                        id="role"
+                        onChange={handleChange}
+                        value={formState.values.role || ''}
+                        required
+                      >
+                        <option value="">Please select</option>
+                        <option value="basic">Basic</option>
+                        <option value="admin">Admin</option>
+                      </CSelect>
+                      <CFormText className="help-block">{hasError('role') ? formState.errors.role[0] : null}</CFormText>
+                    </CCol>
+                  </CFormGroup>
+                  {formState.values.role === 'basic' ?
+                  <CFormGroup row>
+                    <CCol md="3">
+                      <CLabel htmlFor="project">Project</CLabel>
+                    </CCol>
+                    <CCol xs="12" md="9">
+                      <CSelect
+                        custom
+                        name="project"
+                        id="project"
+                        onChange={handleChange}
+                        value={formState.values.project || ''}
+                      >
+                        <option value="">Please select</option>
+                        {projects && projects.length>0  ? projects.map((project) => 
+                          <option value={project._id}>{project.title}</option>
+                        ): null}
+                      </CSelect>
+                      <CFormText className="help-block">{hasError('project') ? formState.errors.project[0] : null}</CFormText>
+                    </CCol>
+                  </CFormGroup> : null }
                  
               </CModalBody>
               <CModalFooter>
@@ -246,7 +295,7 @@ const Users = () => {
             onClose={setDeleteModal}
           >
             <CModalHeader closeButton> Confirm</CModalHeader>
-            <CModalBody>Are you sure you want to delete this user? </CModalBody>
+            <CModalBody>Are you sure you want to delete this {userType === undefined? 'user': 'invite'}? </CModalBody>
             <CModalFooter>
               <CButton className="text-white bg-danger" type="submit" onClick={handleDeleteField}>Yes</CButton>{' '}
               <CButton
@@ -256,6 +305,38 @@ const Users = () => {
             </CModalFooter>
           </CModal>
 
+        </CCol>
+        <CCol xs="12" lg="12" className="mt-4">
+        <CCard className="shadow-lg">
+            <CCardHeader>
+              Invites
+            </CCardHeader>  
+            <CCardBody>
+              <CDataTable
+                items={invites && invites.length >0 ? invites: []}
+                fields={['email', 'role', 'project', 'actions']}
+                itemsPerPage={10}
+                pagination
+                tableFilter
+                sorter
+                hover
+                scopedSlots = {{
+                  'actions':
+                    (item)=>(
+                      <td className="px-4">
+                        <CButton className="pl-6" color="danger" variant="ghost" onClick={() => openDeleteModal(item, 'invite')}><CIcon name="cil-trash" customClasses="c-sidebar-nav-icon"/></CButton>
+                      </td>
+                    ),
+                  'project':
+                   (item)=> (
+                    <td className="px-4">
+                    {projects.find((project)=> project._id === item.project)?.title}
+                    </td>
+                   )
+                }}
+              />
+            </CCardBody>
+          </CCard>
         </CCol>
 
       </CRow>

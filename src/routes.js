@@ -9,7 +9,7 @@ const Viewer = React.lazy( ()=> import('./views/pages/viewer/viewer'));
 const ChangePassword = React.lazy( ()=> import('./views/pages/changePassword/changePassword'));
 const ResetPassword = React.lazy( ()=> import('./views/pages/resetpassword/resetpassword'));
 const userProfile = React.lazy( ()=> import('./views/pages/user/profile'));
-
+const Signup = React.lazy( ()=> import('./views/pages/signup/Signup'));
 
 
 const routes = [

@@ -12,9 +12,6 @@ import {
   INVITE_USER_BEGINS, INVITE_USER_FAILURE, INVITE_USER_SUCCESS,
   REMOVE_USER_BEGINS, REMOVE_USER_SUCCESS, REMOVE_USER_FAILURE,
   GET_ACCESS_TOKEN, GET_ACCESS_TOKEN_FAILURE,
-  GET_ASSET_DATA, GET_ASSET_DATA_FAILS,
-  UPDATE_ASSET_DATA_BEGINS,
-  UPDATE_ASSET_DATA_FAILS, UPDATE_ASSET_DATA_SUCCESS,
   CHANGE_PASSWORD_BEGINS, CHANGE_PASSWORD_SUCCESS, CHANGE_PASSWORD_FAILURE,
   FORGOT_PASSWORD_BEGINS, FORGOT_PASSWORD_SUCCESS, FORGOT_PASSWORD_FAILURE,
   RESET_PASSWORD_BEGINS, RESET_PASSWORD_SUCCESS, RESET_PASSWORD_FAILURE,
@@ -22,6 +19,8 @@ import {
   GET_USER_BEGINS, GET_USER_SUCCESS, GET_USER_FAILURE,
   DELETE_USER_BEGINS, DELETE_USER_SUCCESS, DELETE_USER_FAILURE,
   UPDATE_USER_BEGINS, UPDATE_USER_SUCCESS, UPDATE_USER_FAILURE,
+  GET_INVITES_BEGINS, GET_INVITES_SUCCESS, GET_INVITES_FAILS,
+  DELETE_INVITE_BEGINS, DELETE_INVITE_SUCCESS, DELETE_INVITE_FAILURE,
   UPDATE_USER_PROFILE_BEGINS, UPDATE_USER_PROFILE_SUCCESS, UPDATE_USER_PROFILE_FAILURE
 } from './actionTypes';
 
@@ -97,67 +96,6 @@ export function getForgeAccessTokenFails(message) {
   return {
     type: GET_ACCESS_TOKEN_FAILURE,
     message
-  };
-}
-
-/**
- * @export
- * @param {any} message
- * @returns {message} forge token success message
- */
-export function getAssetData(data) {
-  return {
-    type: GET_ASSET_DATA,
-    data
-  };
-}
-
-/**
- * @export
- * @param {any} message
- * @returns {message} signup success message
- */
-export function getAssetDataFails(message) {
-  return {
-    type: GET_ASSET_DATA_FAILS,
-    message
-  };
-}
-
-/**
- * @export
- * @param {any}
- * @returns {null} update access data begins
- */
-export function updateAssetDataBegins() {
-  return {
-    type: UPDATE_ASSET_DATA_BEGINS,
-  };
-}
-
-/**
- * @export
- * @param {any} data
- * @returns {data} forge token success message
- */
-export function updateAssetData(message, data, id) {
-  return {
-    type: UPDATE_ASSET_DATA_SUCCESS,
-    message,
-    data,
-    id
-  };
-}
-
-/**
- * @export
- * @param {any} error
- * @returns {error} error message
- */
-export function updateAssetDataFails(error) {
-  return {
-    type: UPDATE_ASSET_DATA_FAILS,
-    error
   };
 }
 
@@ -302,7 +240,42 @@ export function getUsersSuccess(data, message) {
     error
   };
 }
+/**
+ * @export
+ * @param {any}
+ * @returns {null} get user invites
+ */
+ export function getInvitesBegins() {
+  return {
+    type: GET_INVITES_BEGINS
+  };
+}
 
+/**
+ * @export
+ * @param {any} data
+ * @returns {data} get user invites success
+ */
+export function getInvitesSuccess(data, message) {
+  return {
+    type: GET_INVITES_SUCCESS,
+    data,
+    message,
+  };
+}
+
+
+/**
+ * @export
+ * @param {any} error
+ * @returns {error} get users failure
+ */
+ export function getInvitesFails(error) {
+  return {
+    type: GET_INVITES_FAILS,
+    error
+  };
+}
 /**
  * @export
  * @param {any}
@@ -452,6 +425,42 @@ export function deleteUserFails(error) {
 
 /**
  * @export
+ * @param {userId}
+ * @returns {null} delete user invite
+ */
+ export function deleteInviteBegins() {
+  return {
+    type: DELETE_INVITE_BEGINS
+  };
+}
+
+/**
+ * @export
+ * @param {any} data
+ * @returns {data} delete user invite success
+ */
+export function deleteInviteSuccess(id, message) {
+  return {
+    type: DELETE_INVITE_SUCCESS,
+    id,
+    message,
+  };
+}
+
+/**
+ * @export
+ * @param {any} error
+ * @returns {error} delete user invite failure
+ */
+export function deleteInviteFails(error) {
+  return {
+    type: DELETE_INVITE_FAILURE,
+    error
+  };
+}
+
+/**
+ * @export
  * @param {any} history
  * @returns {void}
  */
@@ -550,7 +559,6 @@ export function login(userData, history) {
 
   return (dispatch) => axios.post(BASE_API_URL + '/login', userData)
     .then((response) => {
-      console.log(response)
       const token = response.data.data.token;
       const user = response.data.data;
       localStorage.setItem('x-access-token', token);
@@ -575,13 +583,16 @@ export function login(userData, history) {
  * @returns {user} newly created and logged in user
  */
 export function signup(userData, token, history) {
-  return (dispatch) => axios.post(BASE_API_URL + `/api/signup/${token}`, userData)
+  console.log(userData)
+  return (dispatch) => axios.post(BASE_API_URL + `/signup/${token}`, userData)
     .then((response) => {
       dispatch(setNewUser(response.data.message));
+      console.log(response);
       toast.success('Sign up was successful. Kindly confirm your email and sign in');
       history.push('/sign-in');
     })
     .catch((err) => {
+      console.log(err.response);
       let error = err.response.data.errors ? Object.values(err.response.data.errors).join(', ') : err.response.data.message;
       dispatch(setNewUserFails(err.response.data.message));
       toast.error(error);
@@ -619,61 +630,6 @@ export function getModelData() {
     });
 }
 
-
-
-/**
- * @export
- * @param {any} history
- * @returns {user} get new forge token for viewer
- */
-export function getModelAssetsData(modelId) {
-  return (dispatch) => axios.get( BASE_API_URL + '/model-components/model/'+ modelId)
-    .then((response) => {
-      return dispatch(getAssetData(response.data.data));
-    })
-    .catch((error) =>{
-      dispatch(getAssetDataFails(error));
-    }
-
-    );
-}
-
-function formatData (data) {
-  let results = [];
-  for(let element in data){
-    if(data[element] !== undefined){
-      let result = element+ '=\"'+data[element] + '\"';
-      results.push(result);
-    }
-  }
-  return results;
-
-}
-/**
- * @export
- * @param {any} history
- * @returns {user} get new forge token for viewer
- */
-export function updateModelAssetsData(id, data, stateId) {
-
-  return (dispatch) => {
-    dispatch(updateAssetDataBegins())
-    return axios.put(BASE_API_URL + `/model-components/${stateId}`, data
-    )
-      .then(function (response) {
-        toast.success("Update completely successfully");
-        dispatch(updateAssetData(response.data.message, data, stateId));
-
-      })
-      .catch(function (error) {
-        let errorMessage = error.response.data.errors ? error.response.data.errors.message : error.response.data.error
-        dispatch(updateAssetDataFails(errorMessage));
-        toast.error(errorMessage)
-      });
-  }
-}
-
-
 /**
  * @export
  * @param {any} history
@@ -682,15 +638,14 @@ export function updateModelAssetsData(id, data, stateId) {
 export function inviteUser(data) {
   return (dispatch) => {
     dispatch(inviteUserBegins())
-    return axios.post(BASE_API_URL + "/invite-user", data)
+    return axios.post(BASE_API_URL + "/user/invite", data)
       .then(function (response) {
         toast.success("Invite sent successfully");
         dispatch(inviteUserSuccess("Invite sent successfully", response.data.data ));
 
       })
       .catch(function (error) {
-        // console.log(error.response);
-        let errorMessage = error.response.data.errors ? error.response.data.errors.message : error.response.data.message
+        let errorMessage = error.response.data.errors ? JSON.stringify(error.response.data.errors) : error.response.data.message
         dispatch(inviteUserFails(errorMessage));
         toast.error(errorMessage)
       });
@@ -804,11 +759,28 @@ export function getUsers() {
 
       })
       .catch(function (error) {
+        console.log(error.response);
         let errorMessage = error.response.data.errors ? error.response.data.message : error.response.data.message
         dispatch(getUsersFails(errorMessage));
       });
   }
 }
+
+export function getInvites() {
+  return (dispatch) => {
+    dispatch(getInvitesBegins())
+    return axios.get(BASE_API_URL + "/user/invites")
+      .then(function (response) {
+        dispatch(getInvitesSuccess(response.data.data, response.data.message));
+
+      })
+      .catch(function (error) {
+        let errorMessage = error.response.data.errors ? error.response.data.message : error.response.data.message
+        dispatch(getInvitesFails(errorMessage));
+      });
+  }
+}
+
 
 /**
  * @export
@@ -893,6 +865,29 @@ export function updateUser(data, userId) {
       .catch((error) => {
         let errorMessage = error.response.data.errors ? error.response.data.message : error.response.data.message
         dispatch(updateUserProfileFails(errorMessage));
+        toast.error(errorMessage);
+      });
+  }
+}
+
+/**
+ * @export
+ * @param {userId}
+ * @returns {message} delete user invite
+ */
+ export function deleteUserInvite(userId) {
+
+  return (dispatch) => {
+    dispatch(deleteUserBegins())
+    return axios.delete(BASE_API_URL + `/invite/${userId}`)
+      .then((response) => {
+        dispatch(deleteInviteSuccess( userId, "User invite deleted successfully",));
+        toast.success("User invite deleted successfully");
+      })
+      .catch((error) => {
+        console.log(error.response);
+        let errorMessage = error.response.data.errors ? error.response.data.message : error.response.data.message
+        dispatch(deleteInviteFails(errorMessage));
         toast.error(errorMessage);
       });
   }

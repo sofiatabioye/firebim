@@ -1,3 +1,4 @@
+/* eslint-disable import/no-anonymous-default-export */
 import isEmpty from 'lodash/isEmpty';
 
 import { SET_CURRENT_USER, USER_LOGIN_FAILURE, SIGN_UP, USER_SIGNUP_FAILURE,
