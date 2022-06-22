@@ -5,8 +5,6 @@ import axios from "axios";
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
 import { CRow, CCol, CCard, CLabel, CSelect} from '@coreui/react';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Config from '../../../config';
 import { getForgeToken } from '../../../actions/projectActions';
 import { calculateFireRating } from './fireRating';
@@ -114,9 +112,10 @@ const  Viewer = (props) => {
       // viewer.addEventListener('')
     }
     else{
+      console.log(viewables, '...viewables')
       //Select the first viewable in the list to use in our viewer component
       Autodesk.Viewing.theExtensionManager.registerExtension('FIREBIMExtension', FIREBIMExtension)
-      setViewable(viewables[0]);
+      setViewable(viewables[1]);
       
     }
   }
@@ -418,7 +417,6 @@ const  Viewer = (props) => {
                     id="groundfloor"
                     value={''}
                     required
-                    disabled
                   >
                 <option value=""> {identifiedFloors.length > 0 ? lowestFloor?.nodeName: 'Please Select'}</option>
               </CSelect>
@@ -434,9 +432,12 @@ const  Viewer = (props) => {
                     id="groundfloor"
                     value={''}
                     required
-                    disabled
                   >
                 <option value=""> {identifiedFloors.length > 0 ? highestFloor?.nodeName: 'Please Select'}</option>
+                {identifiedFloors && identifiedFloors.length > 0 ? 
+                 identifiedFloors.map(floor => <options value={floor.elevation}>{floor.nodeName}</options>)
+                 : null  
+                 } 
               </CSelect>
                 </CCol>
               </CRow>
