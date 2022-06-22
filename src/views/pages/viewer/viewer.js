@@ -8,7 +8,11 @@ import { CRow, CCol, CCard, CLabel, CSelect} from '@coreui/react';
 import Config from '../../../config';
 import { getForgeToken } from '../../../actions/projectActions';
 import { calculateFireRating } from './fireRating';
+import FBIMJSON from './fiBIM.json';
 
+const els = Object.values(FBIMJSON);
+const floors = els[0];
+const walls = els[1];
 const Autodesk = window.Autodesk;
 const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
 
@@ -226,12 +230,19 @@ const  Viewer = (props) => {
     viewer.addEventListener(
       Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
         
-        viewer.loadExtension('FIREBIMExtension')
+        viewer.loadExtension('FIREBIMExtension');
+
       })
     const properties = [];
     viewer.addEventListener( Autodesk.Viewing.SELECTION_CHANGED_EVENT, event=>{
       viewer.getPropertyPanel(true).setVisible(false);
      })
+
+    viewer.addEventListener( Autodesk.Viewing.OBJECT_TREE_CREATED_EVENT, async function () {
+      let instanceTree = viewer.model.getData().instanceTree;
+      console.log(instanceTree, '..instance tree');
+
+    })
     
     const modelFloors = [];
     let lowest;
@@ -486,7 +497,15 @@ const  Viewer = (props) => {
               : 'N/A'}
             </div>
           </Collapsible>
-
+          <hr/>
+          <Collapsible trigger={"Elements"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
+            <div className={"px-5 mb-4 mt-4"}>
+              <h3>Floors</h3>
+              {floors.map(item => (<li className= "mb-2 mt-2">{ 'Floor['+ item.element_id+ ']: '  + item.result}</li>))}
+              <h3>Walls</h3>
+              {walls.map(item => (<li className= "mb-2 mt-2">{ 'Wall['+ item.element_id+ ']: '  + item.result}</li>))}
+            </div>
+          </Collapsible>
           <hr/>
           <Collapsible trigger={"Compartmentation"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
