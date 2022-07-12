@@ -666,7 +666,7 @@ const  Viewer = (props) => {
           }
           </CCol>
           <CCol xs={4} className="border border-info h-100 d-inline-block text-center text-white p-4 bg-info bg-gradient">
-            {fireRating.dssDisplay}
+            <div className="text-md px-4"><b>{fireRating.dssDisplay}</b></div>
           </CCol>
         </CRow>
       </CCol>
