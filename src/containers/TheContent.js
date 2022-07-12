@@ -44,10 +44,10 @@ const TheContent = () => {
       dispatch(getProjects());
      
       dispatch(getUser(loggedIn.id));
-      if ( loggedInUser && JSON.parse(loggedInUser).user.role === 'admin') {
+      // if ( loggedInUser && JSON.parse(loggedInUser).user.role === 'admin') {
       dispatch(getUsers());
       dispatch(getInvites());
-      }
+      // }
 
 
   }, []);

@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import ModelViewer from './modelViewer';
+import ComponentView from './component';
 import axios from "axios";
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
-import { CRow, CCol, CCard, CLabel, CSelect} from '@coreui/react';
+import { CRow, CCol, CCard, CLabel, CSelect, CInput} from '@coreui/react';
 import Config from '../../../config';
 import { getForgeToken } from '../../../actions/projectActions';
 import { calculateFireRating } from './fireRating';
 import FBIMJSON from './fiBIM.json';
 
-const els = Object.values(FBIMJSON);
-const floors = els[0];
-const walls = els[1];
+
+// const els = Object.values(FBIMJSON);
 const Autodesk = window.Autodesk;
 const fireRatingClasses = ['30 mins', '60 mins', '90 mins', '120 mins'];
 
@@ -29,13 +29,23 @@ const  Viewer = (props) => {
   const [categoriesValues, setCategoriesValues] = useState([]);
   const [modelFloor, setModelFloors] = useState([]);
   const [identifiedFloors, setIdentifiedFloors] = useState([]);
+  const [floors, setFloors]= useState([]);
+  const [walls, setWalls]= useState([]);
   const [selectedDbId, setSelectedDbId] = useState([]);
-  const [lowestFloor, setLowestFloor] = useState({});
-  const [highestFloor, setHighestFloor] = useState({});
+  const [lowestFloor, setLowestFloor] = useState('');
+  const [highestFloor, setHighestFloor] = useState('');
   const [topfloorHieght, setTopfloorHeight] = useState(0);
   const [fireRating, setFireRating] = useState({});
-  const [viewerWidth, setViewerWidth] = useState(7);
-  const [sidebarWidth, setSidebarWidth] = useState(5);
+  const [viewerWidth, setViewerWidth] = useState(9);
+  const [sidebarWidth, setSidebarWidth] = useState(3);
+  const [selectedElement, setSelectedElement] = useState({});
+  const [structuralElements, setStructuralElements] = useState({
+    floors: [],
+    walls: [],
+    columns: [],
+    beams: []
+  })
+  const [sidebarPropertiesWidth, setSidebarPropertiesWidth] = useState(2);
   const pageRef = useRef(null);
   const dispatch = useDispatch();
   const history = useHistory();
@@ -106,21 +116,17 @@ const  Viewer = (props) => {
     console.log('Error loading viewer.', error);
     
   }
-
+  
   /* after the viewer loads a document, we need to select which viewable to
   display in our component */
   const handleDocumentLoaded = (doc, viewables) => {
     if (viewables.length === 0) {
-     
       console.error('Document contains no viewables.');
-      // viewer.addEventListener('')
     }
     else{
-      console.log(viewables, '...viewables')
-      //Select the first viewable in the list to use in our viewer component
+      //Select the master viewable in the list to use in our viewer component
       Autodesk.Viewing.theExtensionManager.registerExtension('FIREBIMExtension', FIREBIMExtension)
       setViewable(viewables[1]);
-      
     }
   }
 
@@ -160,6 +166,13 @@ const  Viewer = (props) => {
     this.onToolbarCreatedBinded = null;
     this.createUI();
   };
+
+  FIREBIMExtension.prototype.onSelectionEvent = async function(event) {
+
+    let currSelection = viewer.getSelection();
+    console.log(event);
+
+};
 
   FIREBIMExtension.prototype.createUI = function() {
   //  console.log('here in create i')
@@ -224,9 +237,16 @@ const  Viewer = (props) => {
     console.log('Error loading a document', viewer, error); 
   
   }
-
+  const displayElData = (element, type) => {
+    const elementName = type === 'Floor' ? 'Floor ['+ element.element_id+']' : 'Basic Wall ['+ element.element_id+']'
+    let item = type === 'Floor' && floors.length >0 ? floors.find((item) => item.nodeName === elementName): walls.find((item) => item.nodeName === elementName);
+    setSelectedElement({...element, type});
+    viewer.select(item.dbId);
+    viewer.fitToView([item.dbId], viewer.model);
+  }
   const handleModelLoaded = (viewer, model) => {
     setViewer(viewer);
+    viewer.fitToView();
     viewer.addEventListener(
       Autodesk.Viewing.GEOMETRY_LOADED_EVENT, () => {
         
@@ -240,20 +260,37 @@ const  Viewer = (props) => {
 
     viewer.addEventListener( Autodesk.Viewing.OBJECT_TREE_CREATED_EVENT, async function () {
       let instanceTree = viewer.model.getData().instanceTree;
-      console.log(instanceTree, '..instance tree');
 
     })
     
     const modelFloors = [];
     let lowest;
     let highest;
+    const allFloors = [];
+    const allWalls = [];
+    const allBeam = [];
+    const allColumn = [];
+    const others = [];
     getAllLeafComponents(viewer, function (dbIds) {
+    
       viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating', 'Level', 'Height Offset From Level', 'Elevation at Top', 'Area'],
       function(elements){
         for(let i=0; i< elements.length; i++) {
           const random = Math.floor(Math.random() * fireRatingClasses.length);
           let nodeName = viewer.model.getInstanceTree().getNodeName(elements[i].dbId);
-         
+          if(nodeName.includes('Floor')){
+            allFloors.push({nodeName: nodeName, dbId:elements[i].dbId, elevation: elements[i].properties[5].displayValue, area: elements[i].properties[4].displayValue, heightOffset:elements[i].properties[3].displayValue })
+          } 
+          else if (nodeName.includes('Wall')){
+            allWalls.push({nodeName: nodeName, dbId:elements[i].dbId})
+          } 
+          else if (nodeName.includes('Beam')){
+            allBeam.push({nodeName: nodeName, dbId:elements[i].dbId})
+          } else if (nodeName.includes('Column')){
+            allColumn.push({nodeName: nodeName, dbId:elements[i].dbId})
+          } else{
+            others.push({nodeName: nodeName, dbId:elements[i].dbId})
+          }
           if(nodeName.includes('Floor') && elements[i].properties[3].displayValue === 0){
             modelFloors.push({nodeName: nodeName, dbId:elements[i].dbId, elevation: elements[i].properties[5].displayValue, area: elements[i].properties[4].displayValue})
           }
@@ -274,7 +311,15 @@ const  Viewer = (props) => {
        setCategories(Object.keys(categ)); 
        setCategoriesValues(Object.values(categ));
        const sortedModelFloors = modelFloors.sort((a,b)=> a.elevation - b.elevation)
-       setIdentifiedFloors(sortedModelFloors)
+       setFloors(allFloors);
+       setWalls(allWalls);
+       setIdentifiedFloors(sortedModelFloors);
+       setStructuralElements({
+         floors: allFloors,
+         walls: allWalls,
+         columns: allColumn,
+         beams: allBeam
+       })
        // set Lowest floors
        if(Math.abs(sortedModelFloors[0].area - sortedModelFloors[1].area) > 500
          &&  sortedModelFloors[1].area > sortedModelFloors[0].area){
@@ -289,11 +334,13 @@ const  Viewer = (props) => {
       }else{
         highest = sortedModelFloors[sortedModelFloors.length-1]
       }
-      setLowestFloor(lowest);
-      setHighestFloor(highest);
+      setLowestFloor(lowest.nodeName);
+      setHighestFloor(highest.nodeName);
       calculateTopFloorHeight(lowest, highest);
       })
+     
     });
+    
     
   }
   const calculateTopFloorHeight = (lowestFloor, highestFloor) => {
@@ -354,7 +401,7 @@ const  Viewer = (props) => {
   }
   const selectViewerElement = (type) => {
     let selected = highestFloor.dbId;
-    if(type=== 'ground') {
+    if(type === 'ground') {
       selected = lowestFloor.dbId 
     }
     viewer.select(selected);
@@ -367,31 +414,45 @@ const  Viewer = (props) => {
      sidebarSelection.style.display = 'none';
      setViewerWidth(12);
   }
+  
+  const handleChange = (event) => {
+     event.preventDefault();
+     if(event.target.name === 'groundfloor'){
+      setLowestFloor(event.target.value);
+     } else{
+      setHighestFloor(event.target.value);
+     }
+  }
+
+  useEffect (() => {
+     
+     const highest = floors.length > 0 ? floors.find((item) => item.nodeName === highestFloor): null;
+     const lowest = floors.length > 0 ? floors.find((item) => item.nodeName === lowestFloor): null;
+
+    if(!!highest && !!lowest && Object.keys(highest).length > 0 && Object.keys(lowest).length >  0){
+      var selections = [
+        {
+           model: viewer.model,
+           ids: [lowest.dbId, highest.dbId]
+        }
+    ];
+      viewer.impl.selector.setAggregateSelection( selections );
+      viewer.fitToView([lowest.dbId, highest.dbId], viewer.model);
+      const height = highest.elevation - (lowest.elevation+lowest.heightOffset)
+      setTopfloorHeight(height.toFixed(2));
+    } 
+   
+  }, [highestFloor, lowestFloor, floors, viewer]);
 
   return  (
     <>
-    <CRow style={{height: '85vh', marginTop: '-30px'}} innerRef={el => {pageRef.current = el} }>
-      <CCol xs={viewerWidth} xl={viewerWidth} id="viewer">
-        <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2">{project.title} ({project.modelStorageId})</span>
-         <ModelViewer 
-          urn={urn}
-          view={view}
-          handleDocumentError={handleDocumentError}
-          handleDocumentLoaded={handleDocumentLoaded}
-          handleModelError={handleModelError}
-          handleModelLoaded={handleModelLoaded}
-          handleTokenRequested={handleTokenRequested}
-          handleViewerError={handleViewerError}
-          trigger={trigger}
-          setTrigger={setTrigger}
-        /> 
-      </CCol>
+    <CRow style={{height: '85vh', marginTop: '-30px', marginLeft: '-30px'}} innerRef={el => {pageRef.current = el} }>
       {/* <div onClick={triggerSidebar} className="absolute z-5000" style={{bottom: '10%', left: '80%'}}><FontAwesomeIcon icon={faArrowRight} /></div> */}
-      <CCol xs={sidebarWidth} xl={sidebarWidth} className="pb-2" style={{borderLeft: '3px solid'}} id="sidebar">
+      <CCol xs={sidebarWidth} xl={sidebarWidth} className="pb-2" style={{borderRight: '3px solid'}} id="sidebar">
        
         <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', overflow: 'scroll'}}>
        
-          <Collapsible trigger={"Project Information"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available" >
+          <Collapsible trigger={"Project Information"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available" >
             <hr/>
             <div className={"px-2 my-4"}>
               <CRow>
@@ -426,10 +487,15 @@ const  Viewer = (props) => {
                     custom
                     name="groundfloor"
                     id="groundfloor"
-                    value={''}
+                    onChange={handleChange}
+                    value={lowestFloor.nodeName}
                     required
                   >
-                <option value=""> {identifiedFloors.length > 0 ? lowestFloor?.nodeName: 'Please Select'}</option>
+                <option value={lowestFloor}> {identifiedFloors.length > 0 ? lowestFloor: 'Please Select'}</option>
+                {structuralElements.floors &&  structuralElements.floors.length > 0 ? 
+                 structuralElements.floors.map(floor => <option value={floor.nodeName}>{floor.nodeName}</option>)
+                 : null
+                 } 
               </CSelect>
         
                   </CCol>
@@ -439,33 +505,35 @@ const  Viewer = (props) => {
                 <CCol onClick={() => selectViewerElement('top')}>
                   <CSelect
                     custom
-                    name="groundfloor"
-                    id="groundfloor"
-                    value={''}
+                    name="topfloor"
+                    id="topfloor"
+                    value={highestFloor.nodeName}
+                    onChange={handleChange}
                     required
                   >
-                <option value=""> {identifiedFloors.length > 0 ? highestFloor?.nodeName: 'Please Select'}</option>
-                {identifiedFloors && identifiedFloors.length > 0 ? 
-                 identifiedFloors.map(floor => <options value={floor.elevation}>{floor.nodeName}</options>)
+                <option value={highestFloor}> {identifiedFloors.length > 0 ? highestFloor: 'Please Select'}</option>
+                {structuralElements.floors &&  structuralElements.floors.length > 0 ? 
+                 structuralElements.floors.map(floor => <option value={floor.nodeName}>{floor.nodeName}</option>)
                  : null  
                  } 
               </CSelect>
                 </CCol>
               </CRow>
               <CRow className="mt-2">
+                <CCol><CLabel className="font-bold">Ground Floor Offset:</CLabel></CCol>
+                <CCol><CInput name="groundfloor"></CInput></CCol>
+              </CRow>
+              <CRow className="mt-2">
                 <CCol><CLabel className="font-bold">Top Floor Height:</CLabel></CCol>
                 <CCol>{identifiedFloors.length > 0 ? topfloorHieght + 'm': null}</CCol>
               </CRow>
-              {/* <CRow className="mt-2">
-                <CCol><CLabel className="font-bold">Lowest Basement Height</CLabel></CCol>
-                <CCol>{identifiedFloors.length > 0 ? identifiedFloors[0]?.elevation + 'mm': null}</CCol>
-              </CRow> */}
+            
             </div>
             <div></div>
            
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
+          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
             <CRow className={"px-5 mb-4 mt-4 w-full"}>
               {fireRating?
                  <CRow > 
@@ -474,8 +542,10 @@ const  Viewer = (props) => {
                     <CCol>{fireRating.rating} </CCol>
                   </CRow>
                   <CRow style={{width: '100%'}}>
-                    <CCol><CLabel className="font-bold">Description:</CLabel></CCol>
-                    <CCol>{fireRating.description}</CCol>
+                    <CCol>
+                      <CLabel className="font-bold">Description:</CLabel>
+                      <div className='text-justify'>{fireRating.description}</div>
+                    </CCol>
                   </CRow>
                   <CRow style={{width: '100%'}} className="mt-2">
                     <CCol><CLabel className="font-bold">DSS Display:</CLabel></CCol>
@@ -487,7 +557,7 @@ const  Viewer = (props) => {
           </Collapsible>
           <hr/>
          
-          <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
+          <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
             <div className={"px-5 mb-4 mt-4"}>
               {fireRating ? 
               <CRow>
@@ -498,47 +568,68 @@ const  Viewer = (props) => {
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Elements"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible-available">
-            <div className={"px-5 mb-4 mt-4"}>
-              <h3>Floors</h3>
-              {floors.map(item => (<li className= "mb-2 mt-2">{ 'Floor['+ item.element_id+ ']: '  + item.result}</li>))}
-              <h3>Walls</h3>
-              {walls.map(item => (<li className= "mb-2 mt-2">{ 'Wall['+ item.element_id+ ']: '  + item.result}</li>))}
+          <Collapsible trigger={"Properties"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
+            <div className={"px-2 mb-4 mt-4"}>
+              {/* <h5>Floors</h5> */}
+              <Collapsible trigger="Floors" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                <ul>
+                  {FBIMJSON.Floors.map(item => <li key={item.id} className={item.result==="Pass"? "mb-2 mt-2 pass": "mb-2 mt-2 fail"} onClick={() => displayElData(item, 'Floor')}>Floor [{item.element_id}]</li>)}
+                </ul>
+              </Collapsible>
+              <hr className='pb-2'/>
+              <Collapsible trigger="Walls" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                <ul>
+                  {FBIMJSON.Walls.map(item => <li key={item.id} className={item.result==="Pass"? "mb-2 mt-2 pass": "mb-2 mt-2 fail"} onClick={() => displayElData(item, 'Wall')}>Wall [{item.element_id}]</li>)}
+                 </ul>
+              </Collapsible>
+              <hr className='pb-2'/>
+              <Collapsible trigger="Columns" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                
+              </Collapsible>
+              <hr className='pb-2'/>
+              <Collapsible trigger="Beams" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                 
+              </Collapsible>
+              <hr/>
+              {/* {structuralElements.floors.map(item => (<li className= "mb-2 mt-2">{ item.nodeName }</li>))} */}
+              {/* <h5>Walls</h5> */}
+              
+              {/* {structuralElements.walls.map(item => (<li className= "mb-2 mt-2">{ item.nodeName}</li>))} */}
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Compartmentation"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+          <Collapsible trigger={"Compartmentation"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Fire doors"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+          <Collapsible trigger={"Fire doors"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Distance (to exit, etc.)"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+          <Collapsible trigger={"Distance (to exit, etc.)"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
          
             <div className={"px-5 mb-4 mt-4"}>
              <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Number of stair and protection"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+          <Collapsible trigger={"Number of stair and protection"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Means of warning"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+          <Collapsible trigger={"Means of warning"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
               <span class="tooltiptext">Insufficient information</span>
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Fire services and access"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'large'}} className="firebim-collapsible">
+          <Collapsible trigger={"Fire services and access"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
             </div>
@@ -546,6 +637,40 @@ const  Viewer = (props) => {
           <hr/>
         </CCard>
       </CCol>
+      <CCol xs={viewerWidth} xl={viewerWidth} style={{height: '60vh'}} id="viewer">
+        <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2">{project.title} ({project.modelStorageId})</span>
+         <ModelViewer 
+          urn={urn}
+          view={view}
+          handleDocumentError={handleDocumentError}
+          handleDocumentLoaded={handleDocumentLoaded}
+          handleModelError={handleModelError}
+          handleModelLoaded={handleModelLoaded}
+          handleTokenRequested={handleTokenRequested}
+          handleViewerError={handleViewerError}
+          trigger={trigger}
+          setTrigger={setTrigger}
+        /> 
+        <CRow>
+          <CCol xs={8} className="border border-light p-4">
+            <h5>Elements</h5>
+            {selectedElement && Object.keys(selectedElement).length > 0 ?
+             <div className="ratingresults">
+              <div className="py-2"><b>Element:</b> {selectedElement.type} [{selectedElement.element_id}]</div>
+              <div className="py-2"><b>{selectedElement.property}</b></div>
+              <div className="py-2"><b>Remark:</b> {selectedElement.remark}</div>
+              <div className="py-2"><b>Result:</b> {selectedElement.result}</div>
+
+             </div>
+            : null
+          }
+          </CCol>
+          <CCol xs={4} className="border border-info h-100 d-inline-block text-center text-white p-4 bg-info bg-gradient">
+            {fireRating.dssDisplay}
+          </CCol>
+        </CRow>
+      </CCol>
+   
       
       </CRow>
       </>

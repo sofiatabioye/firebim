@@ -79,6 +79,18 @@
   border: 1px solid #ccc;
   clear: both;
 }
+.pass {
+  border: 1px solid #e7e0e0;
+  padding-left: 10px;
+  border-left: 3px solid;
+  border-left-color: cadetblue;
+}
+.fail {
+  border: 1px solid #e7e0e0;
+  padding-left: 10px;
+  border-left: 3px solid;
+  border-left-color: #b49898;
+}
 
 .red {
   background-color: red;
