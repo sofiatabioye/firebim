@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import ModelViewer from './modelViewer';
-import ComponentView from './component';
 import axios from "axios";
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
@@ -31,6 +30,7 @@ const  Viewer = (props) => {
   const [identifiedFloors, setIdentifiedFloors] = useState([]);
   const [floors, setFloors]= useState([]);
   const [walls, setWalls]= useState([]);
+  const [compartments, setCompartments] = useState([]);
   const [selectedDbId, setSelectedDbId] = useState([]);
   const [lowestFloor, setLowestFloor] = useState('');
   const [highestFloor, setHighestFloor] = useState('');
@@ -243,6 +243,22 @@ const  Viewer = (props) => {
     setSelectedElement({...element, type});
     viewer.select(item.dbId);
     viewer.fitToView([item.dbId], viewer.model);
+    var selection = viewer.getSelection();
+    console.log(selection);
+    viewer.getProperties( selection[0], function( result ) {
+        const props = result.properties;
+        console.log(result)
+        for( let i = 0; i < props .length; i++ ) {
+            const property = props[i];
+            if( property.hidden) return;
+
+            const category = props[i].displayCategory;
+            if( category && typeof category === 'string' && category !== '' ) {
+                // The property group you want
+                console.log( category );
+            }
+        }
+    });
   }
   const handleModelLoaded = (viewer, model) => {
     setViewer(viewer);
@@ -259,7 +275,7 @@ const  Viewer = (props) => {
      })
 
     viewer.addEventListener( Autodesk.Viewing.OBJECT_TREE_CREATED_EVENT, async function () {
-      let instanceTree = viewer.model.getData().instanceTree;
+      
 
     })
     
@@ -271,13 +287,24 @@ const  Viewer = (props) => {
     const allBeam = [];
     const allColumn = [];
     const others = [];
-    getAllLeafComponents(viewer, function (dbIds) {
-    
+    const compartments = [];
+    let instanceTree = viewer.model.getData();
+    // .then(items => {
+    //   console.log(items)
+    // }).catch(err => console.log(err));
+    // console.log(a, '...dstau')
+    // console.log(a);
+    // const its = viewer.model.getData().instanceTree;
+    // console.log(viewer.model.getProperties(), '...djdj')
+    getAllLeafComponents(viewer, async function (dbIds) {
+      
       viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating', 'Level', 'Height Offset From Level', 'Elevation at Top', 'Area'],
       function(elements){
+       
         for(let i=0; i< elements.length; i++) {
           const random = Math.floor(Math.random() * fireRatingClasses.length);
           let nodeName = viewer.model.getInstanceTree().getNodeName(elements[i].dbId);
+          let category = elements[i].properties[0]!== undefined ? elements[i].properties[0].displayValue.replace("Revit", "").trim(): '';
           if(nodeName.includes('Floor')){
             allFloors.push({nodeName: nodeName, dbId:elements[i].dbId, elevation: elements[i].properties[5].displayValue, area: elements[i].properties[4].displayValue, heightOffset:elements[i].properties[3].displayValue })
           } 
@@ -288,14 +315,17 @@ const  Viewer = (props) => {
             allBeam.push({nodeName: nodeName, dbId:elements[i].dbId})
           } else if (nodeName.includes('Column')){
             allColumn.push({nodeName: nodeName, dbId:elements[i].dbId})
+          } else if (category === 'Rooms'){
+            compartments.push({nodeName: nodeName, dbId:elements[i].dbId});
           } else{
             others.push({nodeName: nodeName, dbId:elements[i].dbId})
-          }
+          } 
           if(nodeName.includes('Floor') && elements[i].properties[3].displayValue === 0){
             modelFloors.push({nodeName: nodeName, dbId:elements[i].dbId, elevation: elements[i].properties[5].displayValue, area: elements[i].properties[4].displayValue})
           }
-          let category = elements[i].properties[0]!== undefined ? elements[i].properties[0].displayValue.replace("Revit", "").trim(): '';
+         
           // let rating =  elements[i].properties[1] !== undefined ? elements[i].properties[1].displayValue: '';
+        
           let rating = fireRatingClasses[random]
           if(elements[i].properties[0]!== undefined && !categories.includes(category) ){
             categories.push(category);
@@ -313,13 +343,15 @@ const  Viewer = (props) => {
        const sortedModelFloors = modelFloors.sort((a,b)=> a.elevation - b.elevation)
        setFloors(allFloors);
        setWalls(allWalls);
+       setCompartments(compartments);
        setIdentifiedFloors(sortedModelFloors);
        setStructuralElements({
          floors: allFloors,
          walls: allWalls,
          columns: allColumn,
-         beams: allBeam
+         beams: allBeam,
        })
+       console.log(compartments);
        // set Lowest floors
        if(Math.abs(sortedModelFloors[0].area - sortedModelFloors[1].area) > 500
          &&  sortedModelFloors[1].area > sortedModelFloors[0].area){
@@ -405,6 +437,8 @@ const  Viewer = (props) => {
       selected = lowestFloor.dbId 
     }
     viewer.select(selected);
+
+    // console.log(viewer.model.getProperties(selected));
     viewer.fitToView([selected], viewer.model);
   }
 
@@ -428,7 +462,6 @@ const  Viewer = (props) => {
      
      const highest = floors.length > 0 ? floors.find((item) => item.nodeName === highestFloor): null;
      const lowest = floors.length > 0 ? floors.find((item) => item.nodeName === lowestFloor): null;
-
     if(!!highest && !!lowest && Object.keys(highest).length > 0 && Object.keys(lowest).length >  0){
       var selections = [
         {
@@ -480,7 +513,15 @@ const  Viewer = (props) => {
                 <CCol>{getPurposeGroups(project.purposeGroup)}</CCol>
               </CRow>
                <hr/>
-              <CRow className="mt-2">
+              
+            </div>
+            <div></div>
+           
+          </Collapsible>
+          <hr/>
+          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
+            <CRow className={"px-5 mb-4 mt-4 w-full"}>
+            <CRow className="mt-2">
                 <CCol><CLabel className="font-bold">Ground floor:</CLabel></CCol>
                 <CCol onClick={() => selectViewerElement('ground')}>      
                   <CSelect
@@ -528,14 +569,7 @@ const  Viewer = (props) => {
                 <CCol>{identifiedFloors.length > 0 ? topfloorHieght + 'm': null}</CCol>
               </CRow>
             
-            </div>
-            <div></div>
-           
-          </Collapsible>
-          <hr/>
-          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
-            <CRow className={"px-5 mb-4 mt-4 w-full"}>
-              {fireRating?
+              {/* {fireRating?
                  <CRow > 
                   <CRow style={{width: '100%'}} >
                     <CCol><CLabel className="font-bold">Rating:</CLabel></CCol>
@@ -552,7 +586,7 @@ const  Viewer = (props) => {
                     <CCol>{fireRating.dssDisplay}</CCol>
                   </CRow>
                  </CRow>
-              : 'N/A'}
+              : 'N/A'} */}
             </CRow>
           </Collapsible>
           <hr/>
@@ -600,7 +634,10 @@ const  Viewer = (props) => {
           <hr/>
           <Collapsible trigger={"Compartmentation"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
-            <span class="tooltiptext">Insufficient information</span>
+            {/* <span class="tooltiptext">Insufficient information</span> */}
+            <ul>
+                {compartments && Object.keys(compartments).length > 0 ? compartments.map(item => <li key={item.dbId} className={"mb-2 mt-2 pass"} onClick={() => displayElData(item, 'Compartment')}>{item.nodeName}</li>): null}
+                </ul>
             </div>
           </Collapsible>
           <hr/>
