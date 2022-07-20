@@ -91,7 +91,22 @@
   border-left: 3px solid;
   border-left-color: #b49898;
 }
-
+.compartment-collapsible{
+  padding: 10px;
+  font-weight: bold;
+  color: black;
+  background: #cad6df;
+  margin: 2px 10px;
+  width: -webkit-fill-available;
+  border: 1px solid #ccc;
+  display: block;
+}
+.compartment-collapsible-elements {
+  padding: 2px 15px;
+}
+div.tab-pane.active {
+  color: #03071f;
+}
 .red {
   background-color: red;
 }

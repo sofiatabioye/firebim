@@ -4,7 +4,7 @@ import ModelViewer from './modelViewer';
 import axios from "axios";
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
-import { CRow, CCol, CCard, CLabel, CSelect, CInput} from '@coreui/react';
+import { CRow, CCol, CCard, CLabel, CSelect, CInput, CNav, CNavItem, CNavLink, CTabContent, CTabPane, CTabs, CButton} from '@coreui/react';
 import Config from '../../../config';
 import { getForgeToken } from '../../../actions/projectActions';
 import { calculateFireRating } from './fireRating';
@@ -26,30 +26,42 @@ const  Viewer = (props) => {
   const [modelProperties, setModelProperties] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoriesValues, setCategoriesValues] = useState([]);
-  const [modelFloor, setModelFloors] = useState([]);
+  const [activeKey, setActiveKey] = useState(1);
   const [identifiedFloors, setIdentifiedFloors] = useState([]);
   const [floors, setFloors]= useState([]);
   const [walls, setWalls]= useState([]);
-  const [compartments, setCompartments] = useState([]);
-  const [selectedDbId, setSelectedDbId] = useState([]);
+  const [compartmentTypeData, setCompartmentTypeData] = useState({});
+  const [compartments, setCompartments] = useState({});
   const [lowestFloor, setLowestFloor] = useState('');
   const [highestFloor, setHighestFloor] = useState('');
+  const [basementFloor, setBasementFloor] = useState('');
+  const [groundFloorOffset, setGroundFloorOffset] = useState(0);
   const [topfloorHieght, setTopfloorHeight] = useState(0);
+  const [lowestBasementHeight, setLowestBasementHeight] = useState(0);
   const [fireRating, setFireRating] = useState({});
-  const [viewerWidth, setViewerWidth] = useState(9);
-  const [sidebarWidth, setSidebarWidth] = useState(3);
+  const [viewerWidth, setViewerWidth] = useState(8);
+  const [sidebarWidth, setSidebarWidth] = useState(4);
   const [selectedElement, setSelectedElement] = useState({});
+  const [splitView, setSplitView] = useState(false);
   const [structuralElements, setStructuralElements] = useState({
     floors: [],
     walls: [],
     columns: [],
     beams: []
-  })
+  });
+  const [formState, setFormState] = useState({
+    isValid: false,
+    values: {},
+    touched: {},
+    errors: {}
+  });
   const [sidebarPropertiesWidth, setSidebarPropertiesWidth] = useState(2);
   const pageRef = useRef(null);
   const dispatch = useDispatch();
   const history = useHistory();
-
+  const compartmentType = ['Apartment', 'Stair','Lift', 'Corridor', 'Bin', 'Switch',
+                             'Roof', 'WC', 'Lounge', 'Reception', 'Atrium', 'Bath',
+                            'Laundry', 'Store', 'Lobby', 'Others'];
   const categoryData = {
     labels: categories,
     datasets: [
@@ -82,17 +94,9 @@ const  Viewer = (props) => {
       },
     ],
   };
-
-  async function getToken(){
-    return axios.get( Config.BASE_API_URL+  '/forge/token')
-    .then((response) => {
-      setToken(response.data.data.token);
-      dispatch(getForgeToken(response.data.data.token))
-    })
-    .catch((error) =>
-      error
-    );
-  }
+  // useEffect(() => {
+  //   setCompartmentTypeData(compartmentTypeData);
+  // }, [compartmentTypeData]);
 
   useEffect( () => {
     
@@ -111,10 +115,16 @@ const  Viewer = (props) => {
  
   }, [dispatch]);
   
-
+  const handleTab = (key) => {
+    setActiveKey(key);
+    console.log(key);
+  }
   const handleViewerError = (error) => {
     console.log('Error loading viewer.', error);
     
+  }
+  const handleView = (event) => {
+    console.log(event.target);
   }
   
   /* after the viewer loads a document, we need to select which viewable to
@@ -237,28 +247,43 @@ const  Viewer = (props) => {
     console.log('Error loading a document', viewer, error); 
   
   }
+
   const displayElData = (element, type) => {
     const elementName = type === 'Floor' ? 'Floor ['+ element.element_id+']' : 'Basic Wall ['+ element.element_id+']'
     let item = type === 'Floor' && floors.length >0 ? floors.find((item) => item.nodeName === elementName): walls.find((item) => item.nodeName === elementName);
     setSelectedElement({...element, type});
     viewer.select(item.dbId);
     viewer.fitToView([item.dbId], viewer.model);
-    var selection = viewer.getSelection();
-    console.log(selection);
-    viewer.getProperties( selection[0], function( result ) {
-        const props = result.properties;
-        console.log(result)
-        for( let i = 0; i < props .length; i++ ) {
-            const property = props[i];
-            if( property.hidden) return;
+    setSplitView(true);
+  }
 
-            const category = props[i].displayCategory;
-            if( category && typeof category === 'string' && category !== '' ) {
-                // The property group you want
-                console.log( category );
-            }
-        }
-    });
+  const CompartmentForm = (props) => {
+    const { compartments, type } = props;
+    return (
+      <div>
+        {compartments && compartments.length > 0 ? compartments.map((item => {
+          return <>
+                <CRow className="mt-2 compartment-collapsible-elements">
+                  <CCol onClick={() => selectViewerElement('compartment', item.dbId)}>{item.nodeName}</CCol>
+                  <CCol>
+                      <CSelect
+                        custom
+                        name={item.nodeName}
+                        id={item.nodeName}
+                        onChange={(e) => handleCompartmentChange(e, type)}
+                        value={item.category}
+                        required
+                      >
+                        {compartmentType.length > 0 ? compartmentType.map((compType =>
+                          <option value={compType}>{compType}</option>))
+                        : null}
+                        </CSelect>
+                  </CCol>
+                </CRow> 
+            </>
+        })): null}
+      </div>
+    )
   }
   const handleModelLoaded = (viewer, model) => {
     setViewer(viewer);
@@ -282,20 +307,13 @@ const  Viewer = (props) => {
     const modelFloors = [];
     let lowest;
     let highest;
+    let basement;
     const allFloors = [];
     const allWalls = [];
     const allBeam = [];
     const allColumn = [];
     const others = [];
     const compartments = [];
-    let instanceTree = viewer.model.getData();
-    // .then(items => {
-    //   console.log(items)
-    // }).catch(err => console.log(err));
-    // console.log(a, '...dstau')
-    // console.log(a);
-    // const its = viewer.model.getData().instanceTree;
-    // console.log(viewer.model.getProperties(), '...djdj')
     getAllLeafComponents(viewer, async function (dbIds) {
       
       viewer.model.getBulkProperties(dbIds, ['Category','Fire Rating', 'Level', 'Height Offset From Level', 'Elevation at Top', 'Area'],
@@ -316,7 +334,8 @@ const  Viewer = (props) => {
           } else if (nodeName.includes('Column')){
             allColumn.push({nodeName: nodeName, dbId:elements[i].dbId})
           } else if (category === 'Rooms'){
-            compartments.push({nodeName: nodeName, dbId:elements[i].dbId});
+            const category = compartmentType.find(item => nodeName.includes(item));
+            compartments.push({nodeName: nodeName, dbId:elements[i].dbId, category: !!category ? category : 'Others'});
           } else{
             others.push({nodeName: nodeName, dbId:elements[i].dbId})
           } 
@@ -343,6 +362,15 @@ const  Viewer = (props) => {
        const sortedModelFloors = modelFloors.sort((a,b)=> a.elevation - b.elevation)
        setFloors(allFloors);
        setWalls(allWalls);
+       const compartmentTypeData = {};
+        if(compartments && compartments.length> 0){
+          for(let x in compartmentType){
+            const type = compartmentType[x];
+            const typeCompartments = compartments.filter(item => item.category === type);
+            compartmentTypeData[type] = typeCompartments
+          }
+        }
+       setCompartmentTypeData(compartmentTypeData);
        setCompartments(compartments);
        setIdentifiedFloors(sortedModelFloors);
        setStructuralElements({
@@ -351,13 +379,14 @@ const  Viewer = (props) => {
          columns: allColumn,
          beams: allBeam,
        })
-       console.log(compartments);
        // set Lowest floors
        if(Math.abs(sortedModelFloors[0].area - sortedModelFloors[1].area) > 500
          &&  sortedModelFloors[1].area > sortedModelFloors[0].area){
           lowest = sortedModelFloors[1];
+          basement = sortedModelFloors[1];
       }else{
-        lowest = sortedModelFloors[0]
+        lowest = sortedModelFloors[0];
+        basement = sortedModelFloors[0];
       }
       // set Highest Floor
       if(Math.abs(sortedModelFloors[sortedModelFloors.length-1].area - sortedModelFloors[sortedModelFloors.length-2].area) > 500
@@ -366,20 +395,28 @@ const  Viewer = (props) => {
       }else{
         highest = sortedModelFloors[sortedModelFloors.length-1]
       }
+
       setLowestFloor(lowest.nodeName);
       setHighestFloor(highest.nodeName);
-      calculateTopFloorHeight(lowest, highest);
+      setBasementFloor(basement.nodeName);
+      calculateTopFloorHeight(lowest, highest, basement);
       })
      
     });
     
     
   }
-  const calculateTopFloorHeight = (lowestFloor, highestFloor) => {
-    const height = highestFloor.elevation - lowestFloor.elevation
-    setTopfloorHeight((height/1000).toFixed(2));
-    setFireRating(calculateFireRating((height/1000).toFixed(2)));
+  const calculateTopFloorHeight = (lowestFloor, highestFloor, basementFloor) => {
+    const topfloorheight = highestFloor.elevation - (lowestFloor.elevation + groundFloorOffset);
+    const lowestBasementHeight = basementFloor.elevation - (lowestFloor.elevation + groundFloorOffset);
+    setLowestBasementHeight(lowestBasementHeight);
+    setTopfloorHeight((topfloorheight/1000).toFixed(2));
   }
+
+  const calculateRatings = () => {
+
+  }
+
   const handleModelError = (viewer, error) => {
     console.log('Error loading the model.', error, viewer);
   }
@@ -431,10 +468,16 @@ const  Viewer = (props) => {
     }
 
   }
-  const selectViewerElement = (type) => {
-    let selected = highestFloor.dbId;
+  const selectViewerElement = (type, dbId) => {
+    let selected = dbId;
     if(type === 'ground') {
       selected = lowestFloor.dbId 
+    }
+    if(type === 'top') {
+      selected = highestFloor.dbId 
+    }
+    if(type === 'basement') {
+      selected = basementFloor.dbId 
     }
     viewer.select(selected);
 
@@ -453,41 +496,85 @@ const  Viewer = (props) => {
      event.preventDefault();
      if(event.target.name === 'groundfloor'){
       setLowestFloor(event.target.value);
-     } else{
+     } else if (event.target.name === 'topfloor') {
       setHighestFloor(event.target.value);
+     } else if(event.target.name === 'groundfloorOffset'){
+      setGroundFloorOffset(event.target.value);
+     } else{
+      setBasementFloor(event.target.value)
      }
   }
-
+  const handleCompartmentChange = (event, type) => {
+     event.preventDefault();
+     setCompartmentTypeData({
+      ...compartmentTypeData,
+      [type]:  compartmentTypeData[type].map(obj => {
+          if(obj.nodeName === event.target.name){
+              return {...obj, category: event.target.value}
+            }
+          return obj
+      })
+     });
+  }
   useEffect (() => {
      
      const highest = floors.length > 0 ? floors.find((item) => item.nodeName === highestFloor): null;
      const lowest = floors.length > 0 ? floors.find((item) => item.nodeName === lowestFloor): null;
-    if(!!highest && !!lowest && Object.keys(highest).length > 0 && Object.keys(lowest).length >  0){
-      var selections = [
-        {
-           model: viewer.model,
-           ids: [lowest.dbId, highest.dbId]
-        }
-    ];
+     const base = floors.length > 0 ? floors.find((item) => item.nodeName === basementFloor): null;
+      if(!!highest && !!lowest && !!base && Object.keys(highest).length > 0 && Object.keys(lowest).length >  0 && Object.keys(base).length >  0){
+        var selections = [
+          {
+            model: viewer.model,
+            ids: [lowest.dbId, highest.dbId]
+          }
+      ];
+  
       viewer.impl.selector.setAggregateSelection( selections );
       viewer.fitToView([lowest.dbId, highest.dbId], viewer.model);
-      const height = highest.elevation - (lowest.elevation+lowest.heightOffset)
-      setTopfloorHeight(height.toFixed(2));
+      const height = highest.elevation - lowest.elevation - groundFloorOffset;
+      const lowestBasementHeight = base.elevation - lowest.elevation - groundFloorOffset;
+      setLowestBasementHeight(lowestBasementHeight);
+      setTopfloorHeight((height/1000).toFixed(2));
     } 
    
-  }, [highestFloor, lowestFloor, floors, viewer]);
+  }, [highestFloor, lowestFloor, basementFloor, floors, viewer, groundFloorOffset]);
 
   return  (
     <>
     <CRow style={{height: '85vh', marginTop: '-30px', marginLeft: '-30px'}} innerRef={el => {pageRef.current = el} }>
-      {/* <div onClick={triggerSidebar} className="absolute z-5000" style={{bottom: '10%', left: '80%'}}><FontAwesomeIcon icon={faArrowRight} /></div> */}
       <CCol xs={sidebarWidth} xl={sidebarWidth} className="pb-2" style={{borderRight: '3px solid'}} id="sidebar">
        
-        <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', overflow: 'scroll'}}>
-       
-          <Collapsible trigger={"Project Information"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available" >
-            <hr/>
-            <div className={"px-2 my-4"}>
+        <CCard className="shadow-lg py-3 px-3 border-left" style={{background: '#eff2f5', color: 'black', overflow: 'scroll'}}>
+        <CTabs activeTab="setup">
+        <CNav variant="tabs" role="tablist">
+          <CNavItem>
+            <CNavLink
+              href="#"
+              data-tab="info"
+            >
+              General Info
+          </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink
+              href="#"
+              data-tab="setup"
+            >
+              Setup
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink
+              href={handleView}
+              data-tab="results"
+            >
+              Results
+            </CNavLink>
+          </CNavItem>
+        </CNav>
+        <CTabContent>
+          <CTabPane role="tabpanel" aria-labelledby="info-tab" data-tab="info">
+            <div className={"px-2 my-4"} style={{color:"black"}}>
               <CRow>
                 <CCol><CLabel className="font-bold">Project Title:</CLabel></CCol>
                 <CCol>{project.title}</CCol>
@@ -515,13 +602,9 @@ const  Viewer = (props) => {
                <hr/>
               
             </div>
-            <div></div>
-           
-          </Collapsible>
-          <hr/>
-          <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerOpenedClassName="open-collapsible" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
-            <CRow className={"px-5 mb-4 mt-4 w-full"}>
-            <CRow className="mt-2">
+          </CTabPane>
+          <CTabPane role="tabpanel" aria-labelledby="setup-tab" data-tab="setup">
+            <CRow className="mt-4" style={{color:"black"}}>
                 <CCol><CLabel className="font-bold">Ground floor:</CLabel></CCol>
                 <CCol onClick={() => selectViewerElement('ground')}>      
                   <CSelect
@@ -537,8 +620,7 @@ const  Viewer = (props) => {
                  structuralElements.floors.map(floor => <option value={floor.nodeName}>{floor.nodeName}</option>)
                  : null
                  } 
-              </CSelect>
-        
+             </CSelect>
                   </CCol>
               </CRow>
               <CRow className="mt-2">
@@ -561,36 +643,81 @@ const  Viewer = (props) => {
                 </CCol>
               </CRow>
               <CRow className="mt-2">
-                <CCol><CLabel className="font-bold">Ground Floor Offset:</CLabel></CCol>
-                <CCol><CInput name="groundfloor"></CInput></CCol>
+                <CCol><CLabel className="font-bold">Basement Floor:</CLabel></CCol>
+                <CCol onClick={() => selectViewerElement('basement')}>      
+                  <CSelect
+                    custom
+                    name="basementfloor"
+                    id="basementfloor"
+                    onChange={handleChange}
+                    value={basementFloor}
+                    required
+                  >
+                <option value={basementFloor}> {identifiedFloors.length > 0 ? basementFloor: 'Please Select'}</option>
+                {structuralElements.floors &&  structuralElements.floors.length > 0 ? 
+                 structuralElements.floors.map(floor => <option value={floor.nodeName}>{floor.nodeName}</option>)
+                 : null
+                 } 
+             </CSelect>
+                  </CCol>
               </CRow>
               <CRow className="mt-2">
+                <CCol><CLabel className="font-bold">Ground Floor Offset:</CLabel></CCol>
+                <CCol><CInput name="groundfloorOffset" id="groundfloorOffset" type="number" value={groundFloorOffset} onChange={handleChange} ></CInput></CCol>
+              </CRow>
+              <CRow className="mt-4 mb-4">
                 <CCol><CLabel className="font-bold">Top Floor Height:</CLabel></CCol>
                 <CCol>{identifiedFloors.length > 0 ? topfloorHieght + 'm': null}</CCol>
               </CRow>
-            
-              {/* {fireRating?
-                 <CRow > 
-                  <CRow style={{width: '100%'}} >
-                    <CCol><CLabel className="font-bold">Rating:</CLabel></CCol>
-                    <CCol>{fireRating.rating} </CCol>
-                  </CRow>
-                  <CRow style={{width: '100%'}}>
-                    <CCol>
-                      <CLabel className="font-bold">Description:</CLabel>
-                      <div className='text-justify'>{fireRating.description}</div>
-                    </CCol>
-                  </CRow>
-                  <CRow style={{width: '100%'}} className="mt-2">
-                    <CCol><CLabel className="font-bold">DSS Display:</CLabel></CCol>
-                    <CCol>{fireRating.dssDisplay}</CCol>
-                  </CRow>
-                 </CRow>
-              : 'N/A'} */}
+              <hr />
+            <CRow className="mt-2">
+              <Collapsible trigger={"Compartmentation"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available"> 
+                    {compartmentType.length > 0 ? compartmentType.map((item =>(
+                        <>
+                        <Collapsible trigger={item} className="mt-2 compartment-collapsible" triggerOpenedClassName="mt-2 compartment-collapsible">
+                           <CompartmentForm compartments={compartmentTypeData[item]} type={item} />
+                       </Collapsible>
+                        
+                      </>
+                    ))): null} 
+              </Collapsible>
             </CRow>
+            <hr />
+            <CRow className="mt-2">
+              <Collapsible trigger={"Sprinklers"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available"> 
+                <div className="p-4">No sprinklers in this model</div>
+              </Collapsible>
+            </CRow>
+            <hr />
+            <CRow className="mt-4 p-4 align-items-center">
+              <CButton color="info" size="lg">Save</CButton>
+            </CRow>
+          </CTabPane>
+          <CTabPane role="tabpanel" aria-labelledby="result-tab" data-tab="results">
+            <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
+              <div className={"px-2 mb-4 mt-4"}>
+                <Collapsible trigger="Floors" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                  <ul>
+                    {FBIMJSON.Floors.map(item => <li key={item.id} className={item.result==="Pass"? "mb-2 mt-2 pass": "mb-2 mt-2 fail"} onClick={() => displayElData(item, 'Floor')}>Floor [{item.element_id}]</li>)}
+                  </ul>
+                </Collapsible>
+                <hr className='pb-2'/>
+                <Collapsible trigger="Walls" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                  <ul>
+                    {FBIMJSON.Walls.map(item => <li key={item.id} className={item.result==="Pass"? "mb-2 mt-2 pass": "mb-2 mt-2 fail"} onClick={() => displayElData(item, 'Wall')}>Wall [{item.element_id}]</li>)}
+                  </ul>
+                </Collapsible>
+                <hr className='pb-2'/>
+                <Collapsible trigger="Columns" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                  
+                </Collapsible>
+                <hr className='pb-2'/>
+                <Collapsible trigger="Beams" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
+                  
+                </Collapsible>
+                <hr/>
+                </div>
           </Collapsible>
-          <hr/>
-         
           <Collapsible trigger={"Sprinkler"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
             <div className={"px-5 mb-4 mt-4"}>
               {fireRating ? 
@@ -602,45 +729,7 @@ const  Viewer = (props) => {
             </div>
           </Collapsible>
           <hr/>
-          <Collapsible trigger={"Properties"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
-            <div className={"px-2 mb-4 mt-4"}>
-              {/* <h5>Floors</h5> */}
-              <Collapsible trigger="Floors" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
-                <ul>
-                  {FBIMJSON.Floors.map(item => <li key={item.id} className={item.result==="Pass"? "mb-2 mt-2 pass": "mb-2 mt-2 fail"} onClick={() => displayElData(item, 'Floor')}>Floor [{item.element_id}]</li>)}
-                </ul>
-              </Collapsible>
-              <hr className='pb-2'/>
-              <Collapsible trigger="Walls" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
-                <ul>
-                  {FBIMJSON.Walls.map(item => <li key={item.id} className={item.result==="Pass"? "mb-2 mt-2 pass": "mb-2 mt-2 fail"} onClick={() => displayElData(item, 'Wall')}>Wall [{item.element_id}]</li>)}
-                 </ul>
-              </Collapsible>
-              <hr className='pb-2'/>
-              <Collapsible trigger="Columns" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
-                
-              </Collapsible>
-              <hr className='pb-2'/>
-              <Collapsible trigger="Beams" triggerStyle={{padding: '4px', marginTop: '10px', fontWeight: 'bold', fontSize: 'medium'}}>
-                 
-              </Collapsible>
-              <hr/>
-              {/* {structuralElements.floors.map(item => (<li className= "mb-2 mt-2">{ item.nodeName }</li>))} */}
-              {/* <h5>Walls</h5> */}
-              
-              {/* {structuralElements.walls.map(item => (<li className= "mb-2 mt-2">{ item.nodeName}</li>))} */}
-            </div>
-          </Collapsible>
-          <hr/>
-          <Collapsible trigger={"Compartmentation"} key={1} triggerOpenedClassName="open-collapsible2" triggerTagName='button' triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
-            <div className={"px-5 mb-4 mt-4"}>
-            {/* <span class="tooltiptext">Insufficient information</span> */}
-            <ul>
-                {compartments && Object.keys(compartments).length > 0 ? compartments.map(item => <li key={item.dbId} className={"mb-2 mt-2 pass"} onClick={() => displayElData(item, 'Compartment')}>{item.nodeName}</li>): null}
-                </ul>
-            </div>
-          </Collapsible>
-          <hr/>
+  
           <Collapsible trigger={"Fire doors"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible2" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible">
             <div className={"px-5 mb-4 mt-4"}>
             <span class="tooltiptext">Insufficient information</span>
@@ -672,9 +761,14 @@ const  Viewer = (props) => {
             </div>
           </Collapsible>
           <hr/>
+         
+          </CTabPane>
+        </CTabContent>
+        </CTabs>
+         
         </CCard>
       </CCol>
-      <CCol xs={viewerWidth} xl={viewerWidth} style={{height: '60vh'}} id="viewer">
+      <CCol xs={viewerWidth} xl={viewerWidth} style={splitView ? {height: '60vh'}: {height: '80vh'}} id="viewer">
         <span style={{position: 'absolute', zIndex: 50}} className="shadow p-2">{project.title} ({project.modelStorageId})</span>
          <ModelViewer 
           urn={urn}
@@ -687,28 +781,32 @@ const  Viewer = (props) => {
           handleViewerError={handleViewerError}
           trigger={trigger}
           setTrigger={setTrigger}
-        /> 
-        <CRow>
-          <CCol xs={8} className="border border-light p-4">
-            <h5>Elements</h5>
-            {selectedElement && Object.keys(selectedElement).length > 0 ?
+        />
+        
+         {selectedElement && Object.keys(selectedElement).length > 0 ?
+         <CRow style={splitView ? {}: {display: "none"}}>
+          <CCol className="border border-light p-4">
+            <h5>Properties</h5>
+           
              <div className="ratingresults">
               <div className="py-2"><b>Element:</b> {selectedElement.type} [{selectedElement.element_id}]</div>
-              <div className="py-2"><b>{selectedElement.property}</b></div>
+              {/* <div className="py-2"><b>Fire Rating:</b>{selectedElement.property}</div> */}
+              <div className="py-2"><b>Group:</b> {selectedElement.group}</div>
+              <div className="py-2"><b>Compartment?:</b> {selectedElement.compartment !== "" ? "Yes": "No"}</div>
               <div className="py-2"><b>Remark:</b> {selectedElement.remark}</div>
               <div className="py-2"><b>Result:</b> {selectedElement.result}</div>
-
              </div>
-            : null
+          </CCol>
+          {selectedElement.property === "Fire rating: " ? null: 
+            <CCol className="d-inline-block text-center" style={{margin: 'auto', padding: '5%', background: '#e0f0f2', border: '4px solid #00bcd4'}}>
+              <div className="text-md px-4"><b>{selectedElement.property}</b></div>
+            </CCol>
           }
-          </CCol>
-          <CCol xs={4} className="border border-info h-100 d-inline-block text-center text-white p-4 bg-info bg-gradient">
-            <div className="text-md px-4"><b>{fireRating.dssDisplay}</b></div>
-          </CCol>
-        </CRow>
+         
+          </CRow>
+           : null
+          }
       </CCol>
-   
-      
       </CRow>
       </>
     );
