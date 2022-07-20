@@ -4,7 +4,7 @@ import ModelViewer from './modelViewer';
 import axios from "axios";
 import { useHistory } from 'react-router-dom';
 import Collapsible from 'react-collapsible';
-import { CRow, CCol, CCard, CLabel, CSelect, CInput, CNav, CNavItem, CNavLink, CTabContent, CTabPane, CTabs, CButton} from '@coreui/react';
+import { CRow, CCol, CCard, CLabel, CSelect, CInput, CSpinner, CNav, CNavItem, CNavLink, CTabContent, CTabPane, CTabs, CButton} from '@coreui/react';
 import Config from '../../../config';
 import { getForgeToken } from '../../../actions/projectActions';
 import { calculateFireRating } from './fireRating';
@@ -32,6 +32,8 @@ const  Viewer = (props) => {
   const [walls, setWalls]= useState([]);
   const [compartmentTypeData, setCompartmentTypeData] = useState({});
   const [compartments, setCompartments] = useState({});
+  const [processing, setProcessing] = useState(false);
+  const [display, setDisplay] = useState('');
   const [lowestFloor, setLowestFloor] = useState('');
   const [highestFloor, setHighestFloor] = useState('');
   const [basementFloor, setBasementFloor] = useState('');
@@ -114,7 +116,16 @@ const  Viewer = (props) => {
     getToken();
  
   }, [dispatch]);
-  
+
+  useEffect(()=>{
+    if(processing){
+      setTimeout(() => {
+        setProcessing(false);
+        setDisplay("!! Processing Complete")
+      }, 3000);
+    }
+   
+  }, [processing])
   const handleTab = (key) => {
     setActiveKey(key);
     console.log(key);
@@ -690,8 +701,10 @@ const  Viewer = (props) => {
             </CRow>
             <hr />
             <CRow className="mt-4 p-4 align-items-center">
-              <CButton color="info" size="lg">Save</CButton>
+              <CButton color="info" size="lg" onClick={() => setProcessing(true)}>Save</CButton>
+              {processing ? <CSpinner color="success" className="ml-4" /> : <div className="px-4 text-success">{display}</div>}
             </CRow>
+
           </CTabPane>
           <CTabPane role="tabpanel" aria-labelledby="result-tab" data-tab="results">
             <Collapsible trigger={"Fire Rating (for structure)"} key={1} triggerTagName='button' triggerOpenedClassName="open-collapsible" triggerStyle={{padding: '5px', borderRadius: '5px', marginTop: '15px', fontWeight: 'bold', fontSize: 'medium'}} className="firebim-collapsible-available">
